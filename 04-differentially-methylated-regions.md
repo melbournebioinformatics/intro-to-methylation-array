@@ -31,19 +31,6 @@ Use M-values for modelling and beta values for visualisation. DMRcate fits probe
 
 ``` r
 library(minfi)
-```
-
-``` warning
-Warning: replacing previous import 'S4Arrays::makeNindexFromArrayViewport' by
-'DelayedArray::makeNindexFromArrayViewport' when loading 'SummarizedExperiment'
-```
-
-``` warning
-Warning: replacing previous import 'S4Arrays::makeNindexFromArrayViewport' by
-'DelayedArray::makeNindexFromArrayViewport' when loading 'HDF5Array'
-```
-
-``` r
 library(limma)
 library(DMRcate)
 library(IlluminaHumanMethylationEPICv2anno.20a1.hg38)
@@ -85,7 +72,9 @@ myAnnotation <- cpg.annotate(
   coef = "LNCaP_vs_PREC", arraytype = "EPICv2",
   epicv2Filter = "mean", epicv2Remap = FALSE, fdr = 0.05
 )
+```
 
+``` r
 str(myAnnotation)
 ```
 
@@ -139,101 +128,6 @@ Formal class 'CpGannotated' [package "DMRcate"] with 2 slots
 DMRs <- dmrcate(myAnnotation, lambda = 1000, C = 2, pcutoff = "fdr")
 ```
 
-``` output
-Fitting chr1...
-```
-
-``` output
-Fitting chr2...
-```
-
-``` output
-Fitting chr3...
-```
-
-``` output
-Fitting chr4...
-```
-
-``` output
-Fitting chr5...
-```
-
-``` output
-Fitting chr6...
-```
-
-``` output
-Fitting chr7...
-```
-
-``` output
-Fitting chr8...
-```
-
-``` output
-Fitting chr9...
-```
-
-``` output
-Fitting chr10...
-```
-
-``` output
-Fitting chr11...
-```
-
-``` output
-Fitting chr12...
-```
-
-``` output
-Fitting chr13...
-```
-
-``` output
-Fitting chr14...
-```
-
-``` output
-Fitting chr15...
-```
-
-``` output
-Fitting chr16...
-```
-
-``` output
-Fitting chr17...
-```
-
-``` output
-Fitting chr18...
-```
-
-``` output
-Fitting chr19...
-```
-
-``` output
-Fitting chr20...
-```
-
-``` output
-Fitting chr21...
-```
-
-``` output
-Fitting chr22...
-```
-
-``` output
-Demarcating regions...
-```
-
-``` output
-Done!
-```
 
 ``` r
 results.ranges <- extractRanges(DMRs, genome = "hg38")
@@ -359,77 +253,61 @@ head(dmrTable)
 6                                                                         AL669918.1, TAP2, PSMB8, PSMB8-AS1, PSMB9, TAP1
 ```
 
-Plot beta values using the hg38 probe coordinates already stored in `mSetFnFlt`.
-This plot works without an internet connection. Thin lines show individual samples,
-thick lines show group means at each CpG, and the shaded area marks the called DMR.
+`DMR.plot()` adds gene annotations from Ensembl. Following the 2026 Ensembl transition, use an archive for this legacy BioMart service. 
+
+
+``` r
+library(biomaRt)
+ensembl <- methods::new(
+  "Mart",
+  biomart = "ENSEMBL_MART_ENSEMBL",
+  vschema = "default",
+  host = "https://sep2025.archive.ensembl.org/biomart/martservice"
+)
+ensembl <- biomaRt::useDataset(
+  dataset = "hsapiens_gene_ensembl", mart = ensembl
+)
+
+DMR.plot <- DMRcate::DMR.plot
+plot.env <- new.env(parent = environment(DMR.plot))
+plot.env$useEnsembl <- local({
+  mart <- ensembl
+  function(...) mart
+})
+environment(DMR.plot) <- plot.env
+```
 
 
 ``` r
 groups <- c(LNCaP = "#D55E00", PREC = "#0072B2")
 cols <- groups[as.character(sampleType)]
 
-dmr <- 1L
-stopifnot(length(results.ranges) >= dmr,
-          length(sampleType) == ncol(bVals), !anyNA(cols))
-region <- results.ranges[dmr]
-flank <- 5000L
-window <- GenomicRanges::GRanges(
-  seqnames = as.character(GenomicRanges::seqnames(region)),
-  ranges = IRanges::IRanges(
-    start = max(1L, GenomicRanges::start(region) - flank),
-    end = GenomicRanges::end(region) + flank
-  )
-)
-
-# Align probe coordinates explicitly to the beta matrix row order.
-probe.ranges <- GenomicRanges::granges(mSetFnFlt)
-probe.index <- match(rownames(bVals), names(probe.ranges))
-stopifnot(!anyNA(probe.index))
-probe.ranges <- probe.ranges[probe.index]
-in.window <- which(IRanges::overlapsAny(probe.ranges, window))
-stopifnot(length(in.window) > 0L)
-in.window <- in.window[order(GenomicRanges::start(probe.ranges[in.window]))]
-positions <- GenomicRanges::start(probe.ranges[in.window])
-region.betas <- bVals[in.window, , drop = FALSE]
-
-plot(range(c(GenomicRanges::start(window), GenomicRanges::end(window))),
-     c(0, 1), type = "n", ylim = c(0, 1),
-     xlab = paste0(as.character(GenomicRanges::seqnames(region)), " position (hg38)"),
-     ylab = "Beta value", main = paste("DMR", dmr))
-rect(GenomicRanges::start(region), 0, GenomicRanges::end(region), 1,
-     col = "grey90", border = NA)
-matlines(positions, region.betas, type = "o", pch = 16, cex = 0.4,
-         col = grDevices::adjustcolor(unname(cols), alpha.f = 0.4), lty = 1)
-for (group in names(groups)) {
-  group.mean <- rowMeans(region.betas[, sampleType == group, drop = FALSE],
-                        na.rm = TRUE)
-  lines(positions, group.mean, type = "o", pch = 16,
-        col = groups[[group]], lwd = 3)
-}
-legend("topright", legend = names(groups), col = groups, lwd = 3, bty = "n")
-```
-
-<img src="fig/04-differentially-methylated-regions-rendered-dmr-plot-1.png" alt="" style="display: block; margin: auto;" />
-
-`dmr <- 1L` selects the first returned region; change it to `2L` for the second,
-etc. Check the regional statistics before describing one as the strongest result.
-Look for consistent group separation across CpGs, outlying samples and gaps in
-probe coverage. Lines connect measured CpGs; they do not represent measurements
-between probes.
-
-For a richer plot with gene annotations and sample heatmaps, optionally use
-`DMR.plot()`. It queries Ensembl through biomaRt and requires a working connection
-to that service. If it reports SSL or mirror errors, use the local plot above;
-the annotation connection failure does not invalidate the called DMRs.
-
-
-``` r
+par(mfrow = c(1, 1))
 DMR.plot(
-  ranges = results.ranges, dmr = dmr, CpGs = bVals,
+  ranges = results.ranges, dmr = 1, CpGs = bVals,
   phen.col = cols, what = "Beta",
   arraytype = "EPICv2", genome = "hg38"
 )
 ```
+
+``` warning
+Warning in getMethods(coerce, table = TRUE): 'getMethods' is deprecated.
+Use 'getMethodsForDispatch(f, TRUE)' instead.
+See help("Deprecated")
+Warning in getMethods(coerce, table = TRUE): 'getMethods' is deprecated.
+Use 'getMethodsForDispatch(f, TRUE)' instead.
+See help("Deprecated")
+Warning in getMethods(coerce, table = TRUE): 'getMethods' is deprecated.
+Use 'getMethodsForDispatch(f, TRUE)' instead.
+See help("Deprecated")
+```
+
+<img src="fig/04-differentially-methylated-regions-rendered-dmr-plot-1.png" alt="" style="display: block; margin: auto;" />
+
+`dmr = 1` selects the first returned region; `dmr = 2` selects the second, etc.
+Check the regional statistics before describing one as the strongest result.
+Look for consistent group separation across CpGs, outlying samples and gaps in
+probe coverage. 
 
 
 ``` r
