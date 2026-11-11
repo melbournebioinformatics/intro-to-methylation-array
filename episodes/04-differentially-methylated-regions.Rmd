@@ -28,7 +28,7 @@ A differentially methylated region (DMR) contains neighbouring CpG sites with ev
 Start from the normalised, filtered data saved in episode 2. This object has already had cross-reactive probes removed and replicate probes collapsed.
 Use M-values for modelling and beta values for visualisation. DMRcate fits probe-wise models internally; it does not use the `topTable()` results from episode 3 (DMPs) as input.
 
-```{r dmr-setup, message=FALSE}
+```{r dmr-setup, message=FALSE, warning=FALSE}
 library(minfi)
 library(limma)
 library(DMRcate)
@@ -67,8 +67,11 @@ myAnnotation <- cpg.annotate(
 str(myAnnotation)
 ```
 
-```{r dmr-call}
+```{r dmr-call, results='hide', message=FALSE, warning=FALSE}
 DMRs <- dmrcate(myAnnotation, lambda = 1000, C = 2, pcutoff = "fdr")
+```
+
+```{r dmr-ranges}
 results.ranges <- extractRanges(DMRs, genome = "hg38")
 length(results.ranges)
 head(results.ranges)
