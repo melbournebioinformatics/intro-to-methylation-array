@@ -736,7 +736,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-02-first-steps"><p>Content from <a href="02-first-steps.html">First steps: quality control, filtering, normalisation and basic visualisation</a></p>
 <hr>
-<p>Last updated on 2026-10-23 |
+<p>Last updated on 2026-11-11 |
 
         <a href="https://github.com/stellaliu525-web/intro-to-methylation-array/edit/main/episodes/02-first-steps.Rmd" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 60 minutes</p>
@@ -1268,7 +1268,7 @@ Preprocessing
   minfi version: NA
   Manifest version: NA</code></pre>
 </div>
-<p>24054 probes filtered from our methylation dataset. 9000085 probes
+<p>24054 probes filtered from our methylation dataset. 900085 probes
 remaining.</p>
 </section><section><h2 class="section-heading" id="filter-cpgs-with-snps">Filter CpGs with SNPs<a class="anchor" aria-label="anchor" href="#filter-cpgs-with-snps"></a>
 </h2>
@@ -2425,10 +2425,10 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-04-differentially-methylated-regions"><p>Content from <a href="04-differentially-methylated-regions.html">Differentially methylated regions with DMRcate</a></p>
 <hr>
-<p>Last updated on 2026-10-23 |
+<p>Last updated on 2026-11-11 |
 
         <a href="https://github.com/stellaliu525-web/intro-to-methylation-array/edit/main/episodes/04-differentially-methylated-regions.Rmd" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
-<p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 0 minutes</p>
+<p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 55 minutes</p>
 <div class="text-end">
           <button role="button" aria-pressed="false" tabindex="0" id="expand-code" class="pull-right" data-expand="Expand All Solutions " data-collapse="Collapse All Solutions "> Expand All Solutions <i aria-hidden="true" data-feather="plus"></i></button>
         </div>
@@ -2440,8 +2440,10 @@ any links that you are not going to use.
 <div class="inner">
 <h3 class="card-title">Questions</h3>
 <ul>
-<li>How do we identify differentially methylated regions?</li>
-<li>How do we interpret and visualise results from DMRcate?</li>
+<li>How do we identify and visualise differentially methylated
+regions?</li>
+<li>How do probe filtering, remapping and thresholds affect the regions
+we find?</li>
 </ul>
 </div>
 </div>
@@ -2451,30 +2453,580 @@ any links that you are not going to use.
 <div class="inner bordered">
 <h3 class="card-title">Objectives</h3>
 <ul>
-<li>Prepare the inputs for DMRcate.</li>
-<li>Identify differentially methylated regions.</li>
-<li>Summarise and visualise the regions.</li>
+<li>Prepare M-values, a design matrix and a contrast for DMRcate.</li>
+<li>Identify, inspect and plot differentially methylated regions.</li>
+<li>Explore EPICv2 probe remapping.</li>
 </ul>
 </div>
 </div>
 </div>
 </div>
 </div>
-<p>This episode is under development. The sections below outline the
-planned content.</p>
-<section><h2 class="section-heading" id="prepare-the-inputs">Prepare the inputs<a class="anchor" aria-label="anchor" href="#prepare-the-inputs"></a>
+<section><h2 class="section-heading" id="differential-methylation-analysis-of-regions-dmrs">Differential methylation analysis of regions (DMRs)<a class="anchor" aria-label="anchor" href="#differential-methylation-analysis-of-regions-dmrs"></a>
 </h2>
 <hr class="half-width">
-<!-- Add explanations, code examples, and exercises here. --></section><section><h2 class="section-heading" id="identify-regions-with-dmrcate">Identify regions with DMRcate<a class="anchor" aria-label="anchor" href="#identify-regions-with-dmrcate"></a>
+<p>A differentially methylated region (DMR) contains neighbouring CpG
+sites with evidence of differential methylation. DMRcate combines
+spatial information with probe-wise statistics: a region is not simply a
+list of significant DMPs within a gene. Region boundaries also depend on
+probe coverage and analysis settings.</p>
+</section><section><h2 class="section-heading" id="prepare-the-inputs">Prepare the inputs<a class="anchor" aria-label="anchor" href="#prepare-the-inputs"></a>
 </h2>
 <hr class="half-width">
-<!-- Add explanations, code examples, and exercises here. --></section><section><h2 class="section-heading" id="annotate-and-interpret-regions">Annotate and interpret regions<a class="anchor" aria-label="anchor" href="#annotate-and-interpret-regions"></a>
+<p>Start from the normalised, filtered data saved in episode 2. This
+object has already had cross-reactive probes removed and replicate
+probes collapsed. Use M-values for modelling and beta values for
+visualisation. DMRcate fits probe-wise models internally; it does not
+use the <code>topTable()</code> results from episode 3 (DMPs) as
+input.</p>
+<div class="codewrapper sourceCode" id="cb1">
+<h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw">library</span><span class="op">(</span><span class="va">minfi</span><span class="op">)</span></span></code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">WARNING<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="warning" tabindex="0"><code>Warning: replacing previous import 'S4Arrays::makeNindexFromArrayViewport' by
+'DelayedArray::makeNindexFromArrayViewport' when loading 'SummarizedExperiment'</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">WARNING<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="warning" tabindex="0"><code>Warning: replacing previous import 'S4Arrays::makeNindexFromArrayViewport' by
+'DelayedArray::makeNindexFromArrayViewport' when loading 'HDF5Array'</code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb4">
+<h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw">library</span><span class="op">(</span><span class="va">limma</span><span class="op">)</span></span>
+<span><span class="kw">library</span><span class="op">(</span><span class="va">DMRcate</span><span class="op">)</span></span>
+<span><span class="kw">library</span><span class="op">(</span><span class="va">IlluminaHumanMethylationEPICv2anno.20a1.hg38</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">mSetFnFlt</span> <span class="op">&lt;-</span> <span class="fu">readRDS</span><span class="op">(</span><span class="st">"data/processed/normalised-filtered.rds"</span><span class="op">)</span></span>
+<span><span class="va">targets</span> <span class="op">&lt;-</span> <span class="fu">readRDS</span><span class="op">(</span><span class="st">"data/processed/targets.rds"</span><span class="op">)</span></span>
+<span><span class="va">mVals</span> <span class="op">&lt;-</span> <span class="fu">getM</span><span class="op">(</span><span class="va">mSetFnFlt</span><span class="op">)</span></span>
+<span><span class="va">bVals</span> <span class="op">&lt;-</span> <span class="fu">getBeta</span><span class="op">(</span><span class="va">mSetFnFlt</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">sampleType</span> <span class="op">&lt;-</span> <span class="fu">droplevels</span><span class="op">(</span><span class="fu">factor</span><span class="op">(</span><span class="va">targets</span><span class="op">$</span><span class="va">Type</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">design</span> <span class="op">&lt;-</span> <span class="fu">model.matrix</span><span class="op">(</span><span class="op">~</span><span class="fl">0</span> <span class="op">+</span> <span class="va">sampleType</span><span class="op">)</span></span>
+<span><span class="fu">colnames</span><span class="op">(</span><span class="va">design</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu">levels</span><span class="op">(</span><span class="va">sampleType</span><span class="op">)</span></span>
+<span><span class="va">contMatrix</span> <span class="op">&lt;-</span> <span class="fu">makeContrasts</span><span class="op">(</span>LNCaP_vs_PREC <span class="op">=</span> <span class="va">LNCaP</span> <span class="op">-</span> <span class="va">PREC</span>, levels <span class="op">=</span> <span class="va">design</span><span class="op">)</span></span>
+<span><span class="va">contMatrix</span></span></code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>       Contrasts
+Levels  LNCaP_vs_PREC
+  LNCaP             1
+  PREC             -1</code></pre>
+</div>
+<p>This tests <strong>LNCaP minus PrEC</strong>: positive effects
+indicate higher methylation in LNCaP and negative effects indicate
+higher methylation in PrEC.</p>
+</section><section><h2 class="section-heading" id="annotate-probes-and-identify-regions">Annotate probes and identify regions<a class="anchor" aria-label="anchor" href="#annotate-probes-and-identify-regions"></a>
 </h2>
 <hr class="half-width">
-<!-- Add explanations, code examples, and exercises here. --></section><section><h2 class="section-heading" id="visualise-differentially-methylated-regions">Visualise differentially methylated regions<a class="anchor" aria-label="anchor" href="#visualise-differentially-methylated-regions"></a>
+<p><code>cpg.annotate()</code> attaches genomic locations and calculates
+statistics for the selected comparison. <code>fdr</code> defines the
+threshold for individually significant CpGs used by DMRcate’s default
+region thresholding.</p>
+<p>We disable remapping for this baseline analysis because
+cross-reactive probes were removed earlier.</p>
+<div class="codewrapper sourceCode" id="cb6">
+<h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">myAnnotation</span> <span class="op">&lt;-</span> <span class="fu">cpg.annotate</span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">mVals</span>, datatype <span class="op">=</span> <span class="st">"array"</span>, what <span class="op">=</span> <span class="st">"M"</span>,</span>
+<span>  analysis.type <span class="op">=</span> <span class="st">"differential"</span>, design <span class="op">=</span> <span class="va">design</span>,</span>
+<span>  contrasts <span class="op">=</span> <span class="cn">TRUE</span>, cont.matrix <span class="op">=</span> <span class="va">contMatrix</span>,</span>
+<span>  coef <span class="op">=</span> <span class="st">"LNCaP_vs_PREC"</span>, arraytype <span class="op">=</span> <span class="st">"EPICv2"</span>,</span>
+<span>  epicv2Filter <span class="op">=</span> <span class="st">"mean"</span>, epicv2Remap <span class="op">=</span> <span class="cn">FALSE</span>, fdr <span class="op">=</span> <span class="fl">0.05</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">str</span><span class="op">(</span><span class="va">myAnnotation</span><span class="op">)</span></span></code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Formal class 'CpGannotated' [package "DMRcate"] with 2 slots
+  ..@ ranges:Formal class 'GRanges' [package "GenomicRanges"] with 7 slots
+  .. .. ..@ seqnames       :Formal class 'Rle' [package "S4Vectors"] with 4 slots
+  .. .. .. .. ..@ values         : Factor w/ 22 levels "chr1","chr2",..: 1 2 3 4 5 6 7 8 9 10 ...
+  .. .. .. .. ..@ lengths        : int [1:22] 82359 65065 49647 36388 44560 52721 45616 39087 31287 42426 ...
+  .. .. .. .. ..@ elementMetadata: NULL
+  .. .. .. .. ..@ metadata       : list()
+  .. .. ..@ ranges         :Formal class 'IRanges' [package "IRanges"] with 6 slots
+  .. .. .. .. ..@ start          : int [1:852587] 191550 605420 777872 777913 817115 817316 827739 841597 860948 870161 ...
+  .. .. .. .. ..@ width          : int [1:852587] 1 1 1 1 1 1 1 1 1 1 ...
+  .. .. .. .. ..@ NAMES          : chr [1:852587] "chr1:191550" "chr1:605420" "chr1:777872" "chr1:777913" ...
+  .. .. .. .. ..@ elementType    : chr "ANY"
+  .. .. .. .. ..@ elementMetadata: NULL
+  .. .. .. .. ..@ metadata       : list()
+  .. .. ..@ strand         :Formal class 'Rle' [package "S4Vectors"] with 4 slots
+  .. .. .. .. ..@ values         : Factor w/ 3 levels "+","-","*": 3
+  .. .. .. .. ..@ lengths        : int 852587
+  .. .. .. .. ..@ elementMetadata: NULL
+  .. .. .. .. ..@ metadata       : list()
+  .. .. ..@ seqinfo        :Formal class 'Seqinfo' [package "Seqinfo"] with 4 slots
+  .. .. .. .. ..@ seqnames   : chr [1:22] "chr1" "chr2" "chr3" "chr4" ...
+  .. .. .. .. ..@ seqlengths : int [1:22] NA NA NA NA NA NA NA NA NA NA ...
+  .. .. .. .. ..@ is_circular: logi [1:22] NA NA NA NA NA NA ...
+  .. .. .. .. ..@ genome     : chr [1:22] NA NA NA NA ...
+  .. .. ..@ elementMetadata:Formal class 'DFrame' [package "S4Vectors"] with 6 slots
+  .. .. .. .. ..@ rownames       : NULL
+  .. .. .. .. ..@ nrows          : int 852587
+  .. .. .. .. ..@ elementType    : chr "ANY"
+  .. .. .. .. ..@ elementMetadata: NULL
+  .. .. .. .. ..@ metadata       : list()
+  .. .. .. .. ..@ listData       :List of 5
+  .. .. .. .. .. ..$ stat   : num [1:852587] 3.053 17.708 -5.375 -1.893 0.549 ...
+  .. .. .. .. .. ..$ diff   : num [1:852587] 0.06323 0.37757 -0.06784 -0.01895 0.00984 ...
+  .. .. .. .. .. ..$ rawpval: num [1:852587] 1.48e-02 5.61e-08 5.53e-04 9.30e-02 5.97e-01 ...
+  .. .. .. .. .. ..$ ind.fdr: num [1:852587] 2.39e-02 3.27e-07 1.17e-03 1.26e-01 6.47e-01 ...
+  .. .. .. .. .. ..$ is.sig : logi [1:852587] TRUE TRUE TRUE FALSE FALSE TRUE ...
+  .. .. ..@ elementType    : chr "ANY"
+  .. .. ..@ metadata       : list()
+  ..@ betas : num [1:852587, 1:6] 0.694 0.746 0.829 0.885 0.216 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : chr [1:852587] "chr1:191550" "chr1:605420" "chr1:777872" "chr1:777913" ...
+  .. .. ..$ : chr [1:6] "LNCAP_500_1" "LNCAP_500_2" "LNCAP_500_3" "PREC_500_1" ...</code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb8">
+<h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">DMRs</span> <span class="op">&lt;-</span> <span class="fu">dmrcate</span><span class="op">(</span><span class="va">myAnnotation</span>, lambda <span class="op">=</span> <span class="fl">1000</span>, C <span class="op">=</span> <span class="fl">2</span>, pcutoff <span class="op">=</span> <span class="st">"fdr"</span><span class="op">)</span></span></code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr1...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr2...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr3...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr4...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr5...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr6...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr7...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr8...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr9...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr10...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr11...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr12...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr13...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr14...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr15...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr16...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr17...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr18...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr19...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr20...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr21...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Fitting chr22...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Demarcating regions...</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Done!</code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb33">
+<h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">results.ranges</span> <span class="op">&lt;-</span> <span class="fu">extractRanges</span><span class="op">(</span><span class="va">DMRs</span>, genome <span class="op">=</span> <span class="st">"hg38"</span><span class="op">)</span></span></code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>DMRcatedata not installed.
+  Full functionality, documentation, and loading of data might not be possible without installing</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>downloading 1 resources</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>retrieving 1 resource</code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>loading from cache</code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb38">
+<h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">length</span><span class="op">(</span><span class="va">results.ranges</span><span class="op">)</span></span></code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>[1] 91122</code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb40">
+<h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">head</span><span class="op">(</span><span class="va">results.ranges</span><span class="op">)</span></span></code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>GRanges object with 6 ranges and 8 metadata columns:
+      seqnames            ranges strand |   no.cpgs min_smoothed_fdr
+         &lt;Rle&gt;         &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt;        &lt;numeric&gt;
+  [1]     chr6 33188387-33214093      * |       263                0
+  [2]     chr7 27142816-27176257      * |       232                0
+  [3]     chr6 31651210-31671929      * |       219                0
+  [4]     chr6 33311786-33324252      * |       208                0
+  [5]     chr6 32068753-32091828      * |       172                0
+  [6]     chr6 32834415-32848054      * |       148                0
+          Stouffer       HMFDR       Fisher   maxdiff   meandiff
+         &lt;numeric&gt;   &lt;numeric&gt;    &lt;numeric&gt; &lt;numeric&gt;  &lt;numeric&gt;
+  [1]  0.00000e+00 7.56528e-09  0.00000e+00 -0.877030  0.0548098
+  [2]  0.00000e+00 1.53403e-09  0.00000e+00  0.961156  0.4494012
+  [3] 2.45764e-173 2.60020e-08 3.04765e-251  0.816047  0.0350544
+  [4] 8.36111e-234 1.25794e-07  0.00000e+00  0.622321  0.0974661
+  [5]  0.00000e+00 1.72539e-08  0.00000e+00  0.774299 -0.1674433
+  [6] 1.19367e-220 1.07991e-08 1.77879e-289  0.800936  0.0136151
+           overlapping.genes
+                 &lt;character&gt;
+  [1] COL11A2, RXRB, RNY4P..
+  [2] HOXA3, AC004080.6, H..
+  [3] BAG6, APOM, C6orf47,..
+  [4] TAPBP, ZBTB22, DAXX,..
+  [5]        TNXB, RNA5SP206
+  [6] AL669918.1, TAP2, PS..
+  -------
+  seqinfo: 22 sequences from an unspecified genome; no seqlengths</code></pre>
+</div>
+<ul>
+<li>
+<code>lambda = 1000</code> sets the smoothing bandwidth and
+separates regions at gaps of at least 1,000 bases between significant
+CpGs.</li>
+<li>
+<code>C = 2</code> gives a Gaussian kernel standard deviation of 500
+bases.</li>
+<li>
+<code>pcutoff = "fdr"</code> uses the individually significant CpGs
+to index the region threshold. This is the recommended default. A
+numeric cutoff, such as <code>pcutoff = 0.05</code>, instead thresholds
+kernel-smoothed FDR values directly and can be more permissive; it does
+not guarantee a 5% region-level FDR.</li>
+</ul>
+<p>Examples of changing the individual-CpG FDR threshold and the
+region-calling cutoff:</p>
+<div class="codewrapper sourceCode" id="cb42">
+<h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Stricter individual-CpG FDR threshold</span></span>
+<span><span class="va">annotation.strict</span> <span class="op">&lt;-</span> <span class="fu">changeFDR</span><span class="op">(</span><span class="va">myAnnotation</span>, <span class="fl">1e-10</span><span class="op">)</span></span>
+<span><span class="va">DMRs.strict</span> <span class="op">&lt;-</span> <span class="fu">dmrcate</span><span class="op">(</span><span class="va">annotation.strict</span>, lambda <span class="op">=</span> <span class="fl">1000</span>, C <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="va">ranges.strict</span> <span class="op">&lt;-</span> <span class="fu">extractRanges</span><span class="op">(</span><span class="va">DMRs.strict</span>, genome <span class="op">=</span> <span class="st">"hg38"</span><span class="op">)</span></span>
+<span><span class="fu">c</span><span class="op">(</span>baseline <span class="op">=</span> <span class="fu">length</span><span class="op">(</span><span class="va">results.ranges</span><span class="op">)</span>, stricter <span class="op">=</span> <span class="fu">length</span><span class="op">(</span><span class="va">ranges.strict</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Numeric cutoff on kernel-smoothed FDR values; can be more permissive</span></span>
+<span><span class="va">DMRs.numeric</span> <span class="op">&lt;-</span> <span class="fu">dmrcate</span><span class="op">(</span><span class="va">myAnnotation</span>, lambda <span class="op">=</span> <span class="fl">1000</span>, C <span class="op">=</span> <span class="fl">2</span>, pcutoff <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span></code></pre>
+</div>
+</section><section><h2 class="section-heading" id="interpret-and-visualise-regions">Interpret and visualise regions<a class="anchor" aria-label="anchor" href="#interpret-and-visualise-regions"></a>
 </h2>
 <hr class="half-width">
-<!-- Add explanations, code examples, and exercises here. --><div id="keypoints1" class="callout keypoints">
+<p>Inspect DMRs</p>
+<p><code>Coordinates</code>: chromosome, start and end positions.
+<code>no.cpgs</code>: number of CpG sites contributing to the region.
+<code>Stouffer</code>: a combined regional significance measure; smaller
+values indicate stronger evidence. <code>meandiff</code>: the average
+beta-value difference across the region. <code>maxdiff</code>: the
+largest absolute beta-value difference within the region, retaining its
+direction.</p>
+<p>Positive differences indicate higher methylation in LNCaP for our
+contrast. A mean difference can hide CpGs changing in opposite
+directions, so inspect the plot as well as the summary.</p>
+<div class="codewrapper sourceCode" id="cb43">
+<h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">dmrTable</span> <span class="op">&lt;-</span> <span class="fu">as.data.frame</span><span class="op">(</span><span class="va">results.ranges</span><span class="op">)</span></span>
+<span><span class="fu">head</span><span class="op">(</span><span class="va">dmrTable</span><span class="op">)</span></span></code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>  seqnames    start      end width strand no.cpgs min_smoothed_fdr
+1     chr6 33188387 33214093 25707      *     263                0
+2     chr7 27142816 27176257 33442      *     232                0
+3     chr6 31651210 31671929 20720      *     219                0
+4     chr6 33311786 33324252 12467      *     208                0
+5     chr6 32068753 32091828 23076      *     172                0
+6     chr6 32834415 32848054 13640      *     148                0
+       Stouffer        HMFDR        Fisher    maxdiff    meandiff
+1  0.000000e+00 7.565283e-09  0.000000e+00 -0.8770301  0.05480977
+2  0.000000e+00 1.534029e-09  0.000000e+00  0.9611558  0.44940122
+3 2.457638e-173 2.600202e-08 3.047654e-251  0.8160471  0.03505441
+4 8.361109e-234 1.257936e-07  0.000000e+00  0.6223214  0.09746613
+5  0.000000e+00 1.725387e-08  0.000000e+00  0.7742990 -0.16744333
+6 1.193673e-220 1.079909e-08 1.778789e-289  0.8009365  0.01361510
+                                                                                                        overlapping.genes
+1                                                               COL11A2, RXRB, RNY4P10, SLC39A7, HSD17B8, MIR219A1, RING1
+2 HOXA3, AC004080.6, HOXA-AS3, HOXA5, HOXA6, AC004080.5, HOXA7, AC004080.4, HOXA9, AC004080.3, HOXA10-AS, MIR196B, HOXA10
+3                                             BAG6, APOM, C6orf47, C6orf47-AS1, GPANK1, Y_RNA, CSNK2B, AL662899.2, LY6G5B
+4                                                                                     TAPBP, ZBTB22, DAXX, SMIM40, SMIM40
+5                                                                                                         TNXB, RNA5SP206
+6                                                                         AL669918.1, TAP2, PSMB8, PSMB8-AS1, PSMB9, TAP1</code></pre>
+</div>
+<p>Plot beta values using the hg38 probe coordinates already stored in
+<code>mSetFnFlt</code>. This plot works without an internet connection.
+Thin lines show individual samples, thick lines show group means at each
+CpG, and the shaded area marks the called DMR.</p>
+<div class="codewrapper sourceCode" id="cb45">
+<h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">groups</span> <span class="op">&lt;-</span> <span class="fu">c</span><span class="op">(</span>LNCaP <span class="op">=</span> <span class="st">"#D55E00"</span>, PREC <span class="op">=</span> <span class="st">"#0072B2"</span><span class="op">)</span></span>
+<span><span class="va">cols</span> <span class="op">&lt;-</span> <span class="va">groups</span><span class="op">[</span><span class="fu">as.character</span><span class="op">(</span><span class="va">sampleType</span><span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="va">dmr</span> <span class="op">&lt;-</span> <span class="fl">1L</span></span>
+<span><span class="fu">stopifnot</span><span class="op">(</span><span class="fu">length</span><span class="op">(</span><span class="va">results.ranges</span><span class="op">)</span> <span class="op">&gt;=</span> <span class="va">dmr</span>,</span>
+<span>          <span class="fu">length</span><span class="op">(</span><span class="va">sampleType</span><span class="op">)</span> <span class="op">==</span> <span class="fu">ncol</span><span class="op">(</span><span class="va">bVals</span><span class="op">)</span>, <span class="op">!</span><span class="fu">anyNA</span><span class="op">(</span><span class="va">cols</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">region</span> <span class="op">&lt;-</span> <span class="va">results.ranges</span><span class="op">[</span><span class="va">dmr</span><span class="op">]</span></span>
+<span><span class="va">flank</span> <span class="op">&lt;-</span> <span class="fl">5000L</span></span>
+<span><span class="va">window</span> <span class="op">&lt;-</span> <span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">GRanges</span><span class="op">(</span></span>
+<span>  seqnames <span class="op">=</span> <span class="fu">as.character</span><span class="op">(</span><span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">seqnames</span><span class="op">(</span><span class="va">region</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  ranges <span class="op">=</span> <span class="fu">IRanges</span><span class="fu">::</span><span class="fu">IRanges</span><span class="op">(</span></span>
+<span>    start <span class="op">=</span> <span class="fu">max</span><span class="op">(</span><span class="fl">1L</span>, <span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">start</span><span class="op">(</span><span class="va">region</span><span class="op">)</span> <span class="op">-</span> <span class="va">flank</span><span class="op">)</span>,</span>
+<span>    end <span class="op">=</span> <span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">end</span><span class="op">(</span><span class="va">region</span><span class="op">)</span> <span class="op">+</span> <span class="va">flank</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Align probe coordinates explicitly to the beta matrix row order.</span></span>
+<span><span class="va">probe.ranges</span> <span class="op">&lt;-</span> <span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">granges</span><span class="op">(</span><span class="va">mSetFnFlt</span><span class="op">)</span></span>
+<span><span class="va">probe.index</span> <span class="op">&lt;-</span> <span class="fu">match</span><span class="op">(</span><span class="fu">rownames</span><span class="op">(</span><span class="va">bVals</span><span class="op">)</span>, <span class="fu">names</span><span class="op">(</span><span class="va">probe.ranges</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">stopifnot</span><span class="op">(</span><span class="op">!</span><span class="fu">anyNA</span><span class="op">(</span><span class="va">probe.index</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">probe.ranges</span> <span class="op">&lt;-</span> <span class="va">probe.ranges</span><span class="op">[</span><span class="va">probe.index</span><span class="op">]</span></span>
+<span><span class="va">in.window</span> <span class="op">&lt;-</span> <span class="fu">which</span><span class="op">(</span><span class="fu">IRanges</span><span class="fu">::</span><span class="fu">overlapsAny</span><span class="op">(</span><span class="va">probe.ranges</span>, <span class="va">window</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">stopifnot</span><span class="op">(</span><span class="fu">length</span><span class="op">(</span><span class="va">in.window</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0L</span><span class="op">)</span></span>
+<span><span class="va">in.window</span> <span class="op">&lt;-</span> <span class="va">in.window</span><span class="op">[</span><span class="fu">order</span><span class="op">(</span><span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">start</span><span class="op">(</span><span class="va">probe.ranges</span><span class="op">[</span><span class="va">in.window</span><span class="op">]</span><span class="op">)</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="va">positions</span> <span class="op">&lt;-</span> <span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">start</span><span class="op">(</span><span class="va">probe.ranges</span><span class="op">[</span><span class="va">in.window</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">region.betas</span> <span class="op">&lt;-</span> <span class="va">bVals</span><span class="op">[</span><span class="va">in.window</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
+<span></span>
+<span><span class="fu">plot</span><span class="op">(</span><span class="fu">range</span><span class="op">(</span><span class="fu">c</span><span class="op">(</span><span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">start</span><span class="op">(</span><span class="va">window</span><span class="op">)</span>, <span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">end</span><span class="op">(</span><span class="va">window</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>     <span class="fu">c</span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"n"</span>, ylim <span class="op">=</span> <span class="fu">c</span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>,</span>
+<span>     xlab <span class="op">=</span> <span class="fu">paste0</span><span class="op">(</span><span class="fu">as.character</span><span class="op">(</span><span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">seqnames</span><span class="op">(</span><span class="va">region</span><span class="op">)</span><span class="op">)</span>, <span class="st">" position (hg38)"</span><span class="op">)</span>,</span>
+<span>     ylab <span class="op">=</span> <span class="st">"Beta value"</span>, main <span class="op">=</span> <span class="fu">paste</span><span class="op">(</span><span class="st">"DMR"</span>, <span class="va">dmr</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">rect</span><span class="op">(</span><span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">start</span><span class="op">(</span><span class="va">region</span><span class="op">)</span>, <span class="fl">0</span>, <span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">end</span><span class="op">(</span><span class="va">region</span><span class="op">)</span>, <span class="fl">1</span>,</span>
+<span>     col <span class="op">=</span> <span class="st">"grey90"</span>, border <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span>
+<span><span class="fu">matlines</span><span class="op">(</span><span class="va">positions</span>, <span class="va">region.betas</span>, type <span class="op">=</span> <span class="st">"o"</span>, pch <span class="op">=</span> <span class="fl">16</span>, cex <span class="op">=</span> <span class="fl">0.4</span>,</span>
+<span>         col <span class="op">=</span> <span class="fu">grDevices</span><span class="fu">::</span><span class="fu">adjustcolor</span><span class="op">(</span><span class="fu">unname</span><span class="op">(</span><span class="va">cols</span><span class="op">)</span>, alpha.f <span class="op">=</span> <span class="fl">0.4</span><span class="op">)</span>, lty <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">group</span> <span class="kw">in</span> <span class="fu">names</span><span class="op">(</span><span class="va">groups</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">group.mean</span> <span class="op">&lt;-</span> <span class="fu">rowMeans</span><span class="op">(</span><span class="va">region.betas</span><span class="op">[</span>, <span class="va">sampleType</span> <span class="op">==</span> <span class="va">group</span>, drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span>,</span>
+<span>                        na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>  <span class="fu">lines</span><span class="op">(</span><span class="va">positions</span>, <span class="va">group.mean</span>, type <span class="op">=</span> <span class="st">"o"</span>, pch <span class="op">=</span> <span class="fl">16</span>,</span>
+<span>        col <span class="op">=</span> <span class="va">groups</span><span class="op">[[</span><span class="va">group</span><span class="op">]</span><span class="op">]</span>, lwd <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="fu">legend</span><span class="op">(</span><span class="st">"topright"</span>, legend <span class="op">=</span> <span class="fu">names</span><span class="op">(</span><span class="va">groups</span><span class="op">)</span>, col <span class="op">=</span> <span class="va">groups</span>, lwd <span class="op">=</span> <span class="fl">3</span>, bty <span class="op">=</span> <span class="st">"n"</span><span class="op">)</span></span></code></pre>
+</div>
+<figure><img src="../fig/04-differentially-methylated-regions-rendered-dmr-plot-1.png" alt="" style="display: block; margin: auto;" class="figure mx-auto d-block"></figure><p><code>dmr &lt;- 1L</code> selects the first returned region; change
+it to <code>2L</code> for the second, etc. Check the regional statistics
+before describing one as the strongest result. Look for consistent group
+separation across CpGs, outlying samples and gaps in probe coverage.
+Lines connect measured CpGs; they do not represent measurements between
+probes.</p>
+<p>For a richer plot with gene annotations and sample heatmaps,
+optionally use <code>DMR.plot()</code>. It queries Ensembl through
+biomaRt and requires a working connection to that service. If it reports
+SSL or mirror errors, use the local plot above; the annotation
+connection failure does not invalidate the called DMRs.</p>
+<div class="codewrapper sourceCode" id="cb46">
+<h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">DMR.plot</span><span class="op">(</span></span>
+<span>  ranges <span class="op">=</span> <span class="va">results.ranges</span>, dmr <span class="op">=</span> <span class="va">dmr</span>, CpGs <span class="op">=</span> <span class="va">bVals</span>,</span>
+<span>  phen.col <span class="op">=</span> <span class="va">cols</span>, what <span class="op">=</span> <span class="st">"Beta"</span>,</span>
+<span>  arraytype <span class="op">=</span> <span class="st">"EPICv2"</span>, genome <span class="op">=</span> <span class="st">"hg38"</span></span>
+<span><span class="op">)</span></span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb47">
+<h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">dir.create</span><span class="op">(</span><span class="st">"data/output"</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="fu">saveRDS</span><span class="op">(</span><span class="va">results.ranges</span>, <span class="st">"data/output/DMRs_epicv2_LNCaP_vs_PREC.rds"</span><span class="op">)</span></span>
+<span><span class="fu">write.csv</span><span class="op">(</span><span class="va">dmrTable</span>, <span class="st">"data/output/DMRs_epicv2_LNCaP_vs_PREC.csv"</span>,</span>
+<span>          row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre>
+</div>
+<div id="further-learning-remapping-epicv2-probes" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<span class="callout-header">Callout</span>
+<div id="further-learning-remapping-epicv2-probes" class="callout-inner">
+<h3 class="callout-title">Further learning: remapping EPICv2 probes</h3>
+<div class="callout-content">
+<p>Some EPICv2 probes preferentially bind to a genomic location other
+than their original annotated target. DMRcate can use evidence from the
+extended EPICv2 manifest to assign eligible probes to these alternative
+locations before calling regions. Remapping aims to improve positional
+accuracy and DMR analysis by assigning eligible probes to
+better-supported genomic locations. It can reveal previously missed
+regions or change which CpGs support an existing region and where its
+boundaries fall.</p>
+<p>To explore this approach, start from quality-controlled data
+<strong>before cross-reactive probes are removed and replicate probes
+are collapsed</strong>, retaining full EPICv2 probe IDs. In the DMRcate
+workflow, <code>rmSNPandCH(..., rmcrosshyb = FALSE)</code> retains
+cross-hybridising probes, and
+<code>cpg.annotate(..., arraytype = "EPICv2", epicv2Remap = TRUE)</code>
+enables remapping; replicate handling is controlled separately with
+<code>epicv2Filter</code>. These are argument examples, not a complete
+replacement for the QC workflow.</p>
+<p>For a full worked example covering input preparation, remapping,
+matched comparisons and visualisation, see <a href="https://clark-lab.github.io/EPICv2_tutorial/#remapping-cross-hybridising-probes-and-improving-dmr-calling-with-dmrcate-and-epicv2remap" class="external-link">section
+6.2 of the Clark Lab EPICv2 tutorial</a>.</p>
+<p>Consult the <a href="https://bioconductor.org/packages/release/bioc/manuals/DMRcate/man/DMRcate.pdf" class="external-link">DMRcate
+reference manual</a> for the arguments supported by your package
+version. Compare analyses using the same design and thresholds, and
+inspect the probe locations supporting any changed regions. Improved
+mapping is the aim; an increase in the number of DMRs alone does not
+demonstrate improved accuracy.</p>
+</div>
+</div>
+</div>
+<div id="interpret-the-region-analysis" class="callout challenge">
+<div class="callout-square">
+<i class="callout-icon" data-feather="zap"></i>
+</div>
+<span class="callout-header">Challenge</span>
+<div id="interpret-the-region-analysis" class="callout-inner">
+<h3 class="callout-title">Interpret the region analysis</h3>
+<div class="callout-content">
+<ol style="list-style-type: decimal">
+<li>For the contrast <code>LNCaP_vs_PREC</code>, what does a positive
+<code>meandiff</code> indicate?</li>
+<li>What should you check if a candidate region has a large mean beta
+difference?</li>
+</ol>
+</div>
+</div>
+</div>
+<div id="accordionSolution1" class="accordion challenge-accordion accordion-flush">
+<div class="accordion-item">
+<button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
+  <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
+</button>
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div class="accordion-body">
+<ol style="list-style-type: decimal">
+<li>Higher average methylation in LNCaP than PrEC across the
+region.</li>
+<li>Inspect regional evidence, individual CpG directions, sample
+variation, probe coverage and mapping. A large effect alone does not
+establish statistical significance or biological generalisability.</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
 <i class="callout-icon" data-feather="key"></i>
 </div>
@@ -2482,7 +3034,18 @@ planned content.</p>
 <div class="callout-inner">
 <div class="callout-content">
 <ul>
-<li>Key points will be added when this episode is completed.</li>
+<li>DMRcate combines probe-wise statistics with genomic proximity to
+identify regions.</li>
+<li>Use M-values for testing, beta values for interpretation and a
+consistent array type and genome build.</li>
+<li>CpG FDR thresholds and numeric kernel-smoothed cutoffs have
+different meanings.</li>
+<li>Inspect regional statistics and sample-level patterns alongside gene
+annotations.</li>
+<li>EPICv2 remapping aims to improve positional accuracy and DMR
+detection by assigning eligible probes to better-supported genomic
+locations; these probes must be retained before cross-reactivity
+filtering.</li>
 </ul>
 </div>
 </div>
@@ -2540,9 +3103,9 @@ any links that you are not going to use.
   "creativeWorkStatus": "active",
   "url": "https://stellaliu525-web.github.io/intro-to-methylation-array/instructor/aio.html",
   "identifier": "https://stellaliu525-web.github.io/intro-to-methylation-array/instructor/aio.html",
-  "dateCreated": "2026-10-23",
-  "dateModified": "2026-11-10",
-  "datePublished": "2026-11-10"
+  "dateCreated": "2026-11-11",
+  "dateModified": "2026-11-11",
+  "datePublished": "2026-11-11"
 }
 
   </script><script>
