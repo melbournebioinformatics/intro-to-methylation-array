@@ -365,25 +365,8 @@ input.</p>
 <h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw">library</span><span class="op">(</span><span class="va">minfi</span><span class="op">)</span></span></code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">WARNING<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="warning" tabindex="0"><code>Warning: replacing previous import 'S4Arrays::makeNindexFromArrayViewport' by
-'DelayedArray::makeNindexFromArrayViewport' when loading 'SummarizedExperiment'</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">WARNING<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="warning" tabindex="0"><code>Warning: replacing previous import 'S4Arrays::makeNindexFromArrayViewport' by
-'DelayedArray::makeNindexFromArrayViewport' when loading 'HDF5Array'</code></pre>
-</div>
-<div class="codewrapper sourceCode" id="cb4">
-<h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw">library</span><span class="op">(</span><span class="va">limma</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw">library</span><span class="op">(</span><span class="va">minfi</span><span class="op">)</span></span>
+<span><span class="kw">library</span><span class="op">(</span><span class="va">limma</span><span class="op">)</span></span>
 <span><span class="kw">library</span><span class="op">(</span><span class="va">DMRcate</span><span class="op">)</span></span>
 <span><span class="kw">library</span><span class="op">(</span><span class="va">IlluminaHumanMethylationEPICv2anno.20a1.hg38</span><span class="op">)</span></span>
 <span></span>
@@ -416,7 +399,7 @@ threshold for individually significant CpGs used by DMRcate’s default
 region thresholding.</p>
 <p>We disable remapping for this baseline analysis because
 cross-reactive probes were removed earlier.</p>
-<div class="codewrapper sourceCode" id="cb6">
+<div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="downlit sourceCode r">
@@ -426,9 +409,13 @@ cross-reactive probes were removed earlier.</p>
 <span>  contrasts <span class="op">=</span> <span class="cn">TRUE</span>, cont.matrix <span class="op">=</span> <span class="va">contMatrix</span>,</span>
 <span>  coef <span class="op">=</span> <span class="st">"LNCaP_vs_PREC"</span>, arraytype <span class="op">=</span> <span class="st">"EPICv2"</span>,</span>
 <span>  epicv2Filter <span class="op">=</span> <span class="st">"mean"</span>, epicv2Remap <span class="op">=</span> <span class="cn">FALSE</span>, fdr <span class="op">=</span> <span class="fl">0.05</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu">str</span><span class="op">(</span><span class="va">myAnnotation</span><span class="op">)</span></span></code></pre>
+<span><span class="op">)</span></span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb4">
+<h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">str</span><span class="op">(</span><span class="va">myAnnotation</span><span class="op">)</span></span></code></pre>
 </div>
 <div class="codewrapper">
 <h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -476,133 +463,13 @@ cross-reactive probes were removed earlier.</p>
   .. .. ..$ : chr [1:852587] "chr1:191550" "chr1:605420" "chr1:777872" "chr1:777913" ...
   .. .. ..$ : chr [1:6] "LNCAP_500_1" "LNCAP_500_2" "LNCAP_500_3" "PREC_500_1" ...</code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb8">
+<div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">DMRs</span> <span class="op">&lt;-</span> <span class="fu">dmrcate</span><span class="op">(</span><span class="va">myAnnotation</span>, lambda <span class="op">=</span> <span class="fl">1000</span>, C <span class="op">=</span> <span class="fl">2</span>, pcutoff <span class="op">=</span> <span class="st">"fdr"</span><span class="op">)</span></span></code></pre>
 </div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr1...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr2...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr3...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr4...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr5...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr6...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr7...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr8...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr9...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr10...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr11...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr12...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr13...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr14...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr15...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr16...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr17...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr18...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr19...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr20...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr21...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Fitting chr22...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Demarcating regions...</code></pre>
-</div>
-<div class="codewrapper">
-<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="output" tabindex="0"><code>Done!</code></pre>
-</div>
-<div class="codewrapper sourceCode" id="cb33">
+<div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="downlit sourceCode r">
@@ -629,7 +496,7 @@ cross-reactive probes were removed earlier.</p>
 </h3>
 <pre class="output" tabindex="0"><code>loading from cache</code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb38">
+<div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="downlit sourceCode r">
@@ -640,7 +507,7 @@ cross-reactive probes were removed earlier.</p>
 </h3>
 <pre class="output" tabindex="0"><code>[1] 91122</code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb40">
+<div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="downlit sourceCode r">
@@ -692,7 +559,7 @@ kernel-smoothed FDR values directly and can be more permissive; it does
 not guarantee a 5% region-level FDR.</li>
 </ul><p>Examples of changing the individual-CpG FDR threshold and the
 region-calling cutoff:</p>
-<div class="codewrapper sourceCode" id="cb42">
+<div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="downlit sourceCode r">
@@ -717,7 +584,7 @@ direction.</p>
 <p>Positive differences indicate higher methylation in LNCaP for our
 contrast. A mean difference can hide CpGs changing in opposite
 directions, so inspect the plot as well as the summary.</p>
-<div class="codewrapper sourceCode" id="cb43">
+<div class="codewrapper sourceCode" id="cb17">
 <h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="downlit sourceCode r">
@@ -749,79 +616,65 @@ directions, so inspect the plot as well as the summary.</p>
 5                                                                                                         TNXB, RNA5SP206
 6                                                                         AL669918.1, TAP2, PSMB8, PSMB8-AS1, PSMB9, TAP1</code></pre>
 </div>
-<p>Plot beta values using the hg38 probe coordinates already stored in
-<code>mSetFnFlt</code>. This plot works without an internet connection.
-Thin lines show individual samples, thick lines show group means at each
-CpG, and the shaded area marks the called DMR.</p>
-<div class="codewrapper sourceCode" id="cb45">
+<p><code>DMR.plot()</code> adds gene annotations from Ensembl. Following
+the 2026 Ensembl transition, use an archive for this legacy BioMart
+service.</p>
+<div class="codewrapper sourceCode" id="cb19">
+<h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw">library</span><span class="op">(</span><span class="va">biomaRt</span><span class="op">)</span></span>
+<span><span class="va">ensembl</span> <span class="op">&lt;-</span> <span class="fu">methods</span><span class="fu">::</span><span class="fu">new</span><span class="op">(</span></span>
+<span>  <span class="st">"Mart"</span>,</span>
+<span>  biomart <span class="op">=</span> <span class="st">"ENSEMBL_MART_ENSEMBL"</span>,</span>
+<span>  vschema <span class="op">=</span> <span class="st">"default"</span>,</span>
+<span>  host <span class="op">=</span> <span class="st">"https://sep2025.archive.ensembl.org/biomart/martservice"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">ensembl</span> <span class="op">&lt;-</span> <span class="fu">biomaRt</span><span class="fu">::</span><span class="fu">useDataset</span><span class="op">(</span></span>
+<span>  dataset <span class="op">=</span> <span class="st">"hsapiens_gene_ensembl"</span>, mart <span class="op">=</span> <span class="va">ensembl</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">DMR.plot</span> <span class="op">&lt;-</span> <span class="fu">DMRcate</span><span class="fu">::</span><span class="va">DMR.plot</span></span>
+<span><span class="va">plot.env</span> <span class="op">&lt;-</span> <span class="fu">new.env</span><span class="op">(</span>parent <span class="op">=</span> <span class="fu">environment</span><span class="op">(</span><span class="va">DMR.plot</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">plot.env</span><span class="op">$</span><span class="va">useEnsembl</span> <span class="op">&lt;-</span> <span class="fu">local</span><span class="op">(</span><span class="op">{</span></span>
+<span>  <span class="va">mart</span> <span class="op">&lt;-</span> <span class="va">ensembl</span></span>
+<span>  <span class="kw">function</span><span class="op">(</span><span class="va">...</span><span class="op">)</span> <span class="va">mart</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="fu">environment</span><span class="op">(</span><span class="va">DMR.plot</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">plot.env</span></span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">groups</span> <span class="op">&lt;-</span> <span class="fu">c</span><span class="op">(</span>LNCaP <span class="op">=</span> <span class="st">"#D55E00"</span>, PREC <span class="op">=</span> <span class="st">"#0072B2"</span><span class="op">)</span></span>
 <span><span class="va">cols</span> <span class="op">&lt;-</span> <span class="va">groups</span><span class="op">[</span><span class="fu">as.character</span><span class="op">(</span><span class="va">sampleType</span><span class="op">)</span><span class="op">]</span></span>
 <span></span>
-<span><span class="va">dmr</span> <span class="op">&lt;-</span> <span class="fl">1L</span></span>
-<span><span class="fu">stopifnot</span><span class="op">(</span><span class="fu">length</span><span class="op">(</span><span class="va">results.ranges</span><span class="op">)</span> <span class="op">&gt;=</span> <span class="va">dmr</span>,</span>
-<span>          <span class="fu">length</span><span class="op">(</span><span class="va">sampleType</span><span class="op">)</span> <span class="op">==</span> <span class="fu">ncol</span><span class="op">(</span><span class="va">bVals</span><span class="op">)</span>, <span class="op">!</span><span class="fu">anyNA</span><span class="op">(</span><span class="va">cols</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">region</span> <span class="op">&lt;-</span> <span class="va">results.ranges</span><span class="op">[</span><span class="va">dmr</span><span class="op">]</span></span>
-<span><span class="va">flank</span> <span class="op">&lt;-</span> <span class="fl">5000L</span></span>
-<span><span class="va">window</span> <span class="op">&lt;-</span> <span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">GRanges</span><span class="op">(</span></span>
-<span>  seqnames <span class="op">=</span> <span class="fu">as.character</span><span class="op">(</span><span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">seqnames</span><span class="op">(</span><span class="va">region</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  ranges <span class="op">=</span> <span class="fu">IRanges</span><span class="fu">::</span><span class="fu">IRanges</span><span class="op">(</span></span>
-<span>    start <span class="op">=</span> <span class="fu">max</span><span class="op">(</span><span class="fl">1L</span>, <span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">start</span><span class="op">(</span><span class="va">region</span><span class="op">)</span> <span class="op">-</span> <span class="va">flank</span><span class="op">)</span>,</span>
-<span>    end <span class="op">=</span> <span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">end</span><span class="op">(</span><span class="va">region</span><span class="op">)</span> <span class="op">+</span> <span class="va">flank</span></span>
-<span>  <span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Align probe coordinates explicitly to the beta matrix row order.</span></span>
-<span><span class="va">probe.ranges</span> <span class="op">&lt;-</span> <span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">granges</span><span class="op">(</span><span class="va">mSetFnFlt</span><span class="op">)</span></span>
-<span><span class="va">probe.index</span> <span class="op">&lt;-</span> <span class="fu">match</span><span class="op">(</span><span class="fu">rownames</span><span class="op">(</span><span class="va">bVals</span><span class="op">)</span>, <span class="fu">names</span><span class="op">(</span><span class="va">probe.ranges</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu">stopifnot</span><span class="op">(</span><span class="op">!</span><span class="fu">anyNA</span><span class="op">(</span><span class="va">probe.index</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">probe.ranges</span> <span class="op">&lt;-</span> <span class="va">probe.ranges</span><span class="op">[</span><span class="va">probe.index</span><span class="op">]</span></span>
-<span><span class="va">in.window</span> <span class="op">&lt;-</span> <span class="fu">which</span><span class="op">(</span><span class="fu">IRanges</span><span class="fu">::</span><span class="fu">overlapsAny</span><span class="op">(</span><span class="va">probe.ranges</span>, <span class="va">window</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu">stopifnot</span><span class="op">(</span><span class="fu">length</span><span class="op">(</span><span class="va">in.window</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0L</span><span class="op">)</span></span>
-<span><span class="va">in.window</span> <span class="op">&lt;-</span> <span class="va">in.window</span><span class="op">[</span><span class="fu">order</span><span class="op">(</span><span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">start</span><span class="op">(</span><span class="va">probe.ranges</span><span class="op">[</span><span class="va">in.window</span><span class="op">]</span><span class="op">)</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="va">positions</span> <span class="op">&lt;-</span> <span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">start</span><span class="op">(</span><span class="va">probe.ranges</span><span class="op">[</span><span class="va">in.window</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="va">region.betas</span> <span class="op">&lt;-</span> <span class="va">bVals</span><span class="op">[</span><span class="va">in.window</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
-<span></span>
-<span><span class="fu">plot</span><span class="op">(</span><span class="fu">range</span><span class="op">(</span><span class="fu">c</span><span class="op">(</span><span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">start</span><span class="op">(</span><span class="va">window</span><span class="op">)</span>, <span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">end</span><span class="op">(</span><span class="va">window</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>     <span class="fu">c</span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"n"</span>, ylim <span class="op">=</span> <span class="fu">c</span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>,</span>
-<span>     xlab <span class="op">=</span> <span class="fu">paste0</span><span class="op">(</span><span class="fu">as.character</span><span class="op">(</span><span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">seqnames</span><span class="op">(</span><span class="va">region</span><span class="op">)</span><span class="op">)</span>, <span class="st">" position (hg38)"</span><span class="op">)</span>,</span>
-<span>     ylab <span class="op">=</span> <span class="st">"Beta value"</span>, main <span class="op">=</span> <span class="fu">paste</span><span class="op">(</span><span class="st">"DMR"</span>, <span class="va">dmr</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu">rect</span><span class="op">(</span><span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">start</span><span class="op">(</span><span class="va">region</span><span class="op">)</span>, <span class="fl">0</span>, <span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">end</span><span class="op">(</span><span class="va">region</span><span class="op">)</span>, <span class="fl">1</span>,</span>
-<span>     col <span class="op">=</span> <span class="st">"grey90"</span>, border <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span>
-<span><span class="fu">matlines</span><span class="op">(</span><span class="va">positions</span>, <span class="va">region.betas</span>, type <span class="op">=</span> <span class="st">"o"</span>, pch <span class="op">=</span> <span class="fl">16</span>, cex <span class="op">=</span> <span class="fl">0.4</span>,</span>
-<span>         col <span class="op">=</span> <span class="fu">grDevices</span><span class="fu">::</span><span class="fu">adjustcolor</span><span class="op">(</span><span class="fu">unname</span><span class="op">(</span><span class="va">cols</span><span class="op">)</span>, alpha.f <span class="op">=</span> <span class="fl">0.4</span><span class="op">)</span>, lty <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="kw">for</span> <span class="op">(</span><span class="va">group</span> <span class="kw">in</span> <span class="fu">names</span><span class="op">(</span><span class="va">groups</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">group.mean</span> <span class="op">&lt;-</span> <span class="fu">rowMeans</span><span class="op">(</span><span class="va">region.betas</span><span class="op">[</span>, <span class="va">sampleType</span> <span class="op">==</span> <span class="va">group</span>, drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span>,</span>
-<span>                        na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span>  <span class="fu">lines</span><span class="op">(</span><span class="va">positions</span>, <span class="va">group.mean</span>, type <span class="op">=</span> <span class="st">"o"</span>, pch <span class="op">=</span> <span class="fl">16</span>,</span>
-<span>        col <span class="op">=</span> <span class="va">groups</span><span class="op">[[</span><span class="va">group</span><span class="op">]</span><span class="op">]</span>, lwd <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span><span class="fu">legend</span><span class="op">(</span><span class="st">"topright"</span>, legend <span class="op">=</span> <span class="fu">names</span><span class="op">(</span><span class="va">groups</span><span class="op">)</span>, col <span class="op">=</span> <span class="va">groups</span>, lwd <span class="op">=</span> <span class="fl">3</span>, bty <span class="op">=</span> <span class="st">"n"</span><span class="op">)</span></span></code></pre>
-</div>
-<figure><img src="../fig/04-differentially-methylated-regions-rendered-dmr-plot-1.png" alt="" style="display: block; margin: auto;" class="figure mx-auto d-block"></figure><p><code>dmr &lt;- 1L</code> selects the first returned region; change
-it to <code>2L</code> for the second, etc. Check the regional statistics
-before describing one as the strongest result. Look for consistent group
-separation across CpGs, outlying samples and gaps in probe coverage.
-Lines connect measured CpGs; they do not represent measurements between
-probes.</p>
-<p>For a richer plot with gene annotations and sample heatmaps,
-optionally use <code>DMR.plot()</code>. It queries Ensembl through
-biomaRt and requires a working connection to that service. If it reports
-SSL or mirror errors, use the local plot above; the annotation
-connection failure does not invalidate the called DMRs.</p>
-<div class="codewrapper sourceCode" id="cb46">
-<h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">DMR.plot</span><span class="op">(</span></span>
-<span>  ranges <span class="op">=</span> <span class="va">results.ranges</span>, dmr <span class="op">=</span> <span class="va">dmr</span>, CpGs <span class="op">=</span> <span class="va">bVals</span>,</span>
+<span><span class="fu">par</span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu">c</span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">DMR.plot</span><span class="op">(</span></span>
+<span>  ranges <span class="op">=</span> <span class="va">results.ranges</span>, dmr <span class="op">=</span> <span class="fl">1</span>, CpGs <span class="op">=</span> <span class="va">bVals</span>,</span>
 <span>  phen.col <span class="op">=</span> <span class="va">cols</span>, what <span class="op">=</span> <span class="st">"Beta"</span>,</span>
 <span>  arraytype <span class="op">=</span> <span class="st">"EPICv2"</span>, genome <span class="op">=</span> <span class="st">"hg38"</span></span>
 <span><span class="op">)</span></span></code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb47">
+<div class="codewrapper">
+<h3 class="code-label">WARNING<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="warning" tabindex="0"><code>Warning in getMethods(coerce, table = TRUE): 'getMethods' is deprecated.
+Use 'getMethodsForDispatch(f, TRUE)' instead.
+See help("Deprecated")
+Warning in getMethods(coerce, table = TRUE): 'getMethods' is deprecated.
+Use 'getMethodsForDispatch(f, TRUE)' instead.
+See help("Deprecated")
+Warning in getMethods(coerce, table = TRUE): 'getMethods' is deprecated.
+Use 'getMethodsForDispatch(f, TRUE)' instead.
+See help("Deprecated")</code></pre>
+</div>
+<figure><img src="../fig/04-differentially-methylated-regions-rendered-dmr-plot-1.png" alt="" style="display: block; margin: auto;" class="figure mx-auto d-block"></figure><p><code>dmr = 1</code> selects the first returned region;
+<code>dmr = 2</code> selects the second, etc. Check the regional
+statistics before describing one as the strongest result. Look for
+consistent group separation across CpGs, outlying samples and gaps in
+probe coverage.</p>
+<div class="codewrapper sourceCode" id="cb22">
 <h3 class="code-label">R<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="downlit sourceCode r">
@@ -887,7 +740,7 @@ difference?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>Higher average methylation in LNCaP than PrEC across the
 region.</li>
