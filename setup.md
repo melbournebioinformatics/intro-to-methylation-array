@@ -59,9 +59,9 @@ BiocManager::install(c(
   "minfi", "limma", "GEOquery",
   "IlluminaHumanMethylationEPICv2anno.20a1.hg38",
   "IlluminaHumanMethylationEPICv2manifest",
-  "AnnotationHub", "ComplexHeatmap", "DMRcate", "missMethyl"
+  "AnnotationHub", "ComplexHeatmap", "DMRcate", "DMRcatedata", "EPICv2manifest", "missMethyl"
 ), update = FALSE, ask = FALSE)
 ```
 
 For EPIC v2 arrays, the matching packages are [`IlluminaHumanMethylationEPICv2manifest`](https://bioconductor.org/packages/IlluminaHumanMethylationEPICv2manifest/) and [`IlluminaHumanMethylationEPICv2anno.20a1.hg38`](https://bioconductor.org/packages/IlluminaHumanMethylationEPICv2anno.20a1.hg38/). 
-Manifest and annotation package required will change depending on array type used. 
+Manifest and annotation package required will change depending on array type used.

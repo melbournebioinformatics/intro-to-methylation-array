@@ -442,7 +442,7 @@ Preprocessing
   minfi version: NA
   Manifest version: NA
 ```
-24054 probes filtered from our methylation dataset. 9000085 probes remaining. 
+24054 probes filtered from our methylation dataset. 900085 probes remaining. 
 
 ## Filter CpGs with SNPs
 

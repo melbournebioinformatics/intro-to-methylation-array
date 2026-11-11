@@ -1,46 +1,484 @@
 ---
 title: "Differentially methylated regions with DMRcate"
-teaching: 0
-exercises: 0
+teaching: 40
+exercises: 15
 ---
-
-<!-- Draft outline: update teaching and exercise times when content is developed. -->
 
 ::::::::::::::::::::::::::::::::::::: questions
 
-- How do we identify differentially methylated regions?
-- How do we interpret and visualise results from DMRcate?
+- How do we identify and visualise differentially methylated regions?
+- How do probe filtering, remapping and thresholds affect the regions we find?
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ::::::::::::::::::::::::::::::::::::: objectives
 
-- Prepare the inputs for DMRcate.
-- Identify differentially methylated regions.
-- Summarise and visualise the regions.
+- Prepare M-values, a design matrix and a contrast for DMRcate.
+- Identify, inspect and plot differentially methylated regions.
+- Explore EPICv2 probe remapping. 
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-This episode is under development. The sections below outline the planned content.
+## Differential methylation analysis of regions (DMRs)
+
+A differentially methylated region (DMR) contains neighbouring CpG sites with evidence of differential methylation. DMRcate combines spatial information with probe-wise statistics: a region is not simply a list of significant DMPs within a gene. Region boundaries also depend on probe coverage and analysis settings.
 
 ## Prepare the inputs
 
-<!-- Add explanations, code examples, and exercises here. -->
+Start from the normalised, filtered data saved in episode 2. This object has already had cross-reactive probes removed and replicate probes collapsed.
+Use M-values for modelling and beta values for visualisation. DMRcate fits probe-wise models internally; it does not use the `topTable()` results from episode 3 (DMPs) as input.
 
-## Identify regions with DMRcate
 
-<!-- Add explanations, code examples, and exercises here. -->
+``` r
+library(minfi)
+```
 
-## Annotate and interpret regions
+``` warning
+Warning: replacing previous import 'S4Arrays::makeNindexFromArrayViewport' by
+'DelayedArray::makeNindexFromArrayViewport' when loading 'SummarizedExperiment'
+```
 
-<!-- Add explanations, code examples, and exercises here. -->
+``` warning
+Warning: replacing previous import 'S4Arrays::makeNindexFromArrayViewport' by
+'DelayedArray::makeNindexFromArrayViewport' when loading 'HDF5Array'
+```
 
-## Visualise differentially methylated regions
+``` r
+library(limma)
+library(DMRcate)
+library(IlluminaHumanMethylationEPICv2anno.20a1.hg38)
 
-<!-- Add explanations, code examples, and exercises here. -->
+mSetFnFlt <- readRDS("data/processed/normalised-filtered.rds")
+targets <- readRDS("data/processed/targets.rds")
+mVals <- getM(mSetFnFlt)
+bVals <- getBeta(mSetFnFlt)
+
+sampleType <- droplevels(factor(targets$Type))
+design <- model.matrix(~0 + sampleType)
+colnames(design) <- levels(sampleType)
+contMatrix <- makeContrasts(LNCaP_vs_PREC = LNCaP - PREC, levels = design)
+contMatrix
+```
+
+``` output
+       Contrasts
+Levels  LNCaP_vs_PREC
+  LNCaP             1
+  PREC             -1
+```
+
+This tests **LNCaP minus PrEC**: positive effects indicate higher methylation in LNCaP and negative effects indicate higher methylation in PrEC.
+
+## Annotate probes and identify regions
+
+`cpg.annotate()` attaches genomic locations and calculates statistics for the selected comparison.
+`fdr` defines the threshold for individually significant CpGs used by DMRcate's default region thresholding.
+
+We disable remapping for this baseline analysis because cross-reactive probes were removed earlier.
+
+
+``` r
+myAnnotation <- cpg.annotate(
+  object = mVals, datatype = "array", what = "M",
+  analysis.type = "differential", design = design,
+  contrasts = TRUE, cont.matrix = contMatrix,
+  coef = "LNCaP_vs_PREC", arraytype = "EPICv2",
+  epicv2Filter = "mean", epicv2Remap = FALSE, fdr = 0.05
+)
+
+str(myAnnotation)
+```
+
+``` output
+Formal class 'CpGannotated' [package "DMRcate"] with 2 slots
+  ..@ ranges:Formal class 'GRanges' [package "GenomicRanges"] with 7 slots
+  .. .. ..@ seqnames       :Formal class 'Rle' [package "S4Vectors"] with 4 slots
+  .. .. .. .. ..@ values         : Factor w/ 22 levels "chr1","chr2",..: 1 2 3 4 5 6 7 8 9 10 ...
+  .. .. .. .. ..@ lengths        : int [1:22] 82359 65065 49647 36388 44560 52721 45616 39087 31287 42426 ...
+  .. .. .. .. ..@ elementMetadata: NULL
+  .. .. .. .. ..@ metadata       : list()
+  .. .. ..@ ranges         :Formal class 'IRanges' [package "IRanges"] with 6 slots
+  .. .. .. .. ..@ start          : int [1:852587] 191550 605420 777872 777913 817115 817316 827739 841597 860948 870161 ...
+  .. .. .. .. ..@ width          : int [1:852587] 1 1 1 1 1 1 1 1 1 1 ...
+  .. .. .. .. ..@ NAMES          : chr [1:852587] "chr1:191550" "chr1:605420" "chr1:777872" "chr1:777913" ...
+  .. .. .. .. ..@ elementType    : chr "ANY"
+  .. .. .. .. ..@ elementMetadata: NULL
+  .. .. .. .. ..@ metadata       : list()
+  .. .. ..@ strand         :Formal class 'Rle' [package "S4Vectors"] with 4 slots
+  .. .. .. .. ..@ values         : Factor w/ 3 levels "+","-","*": 3
+  .. .. .. .. ..@ lengths        : int 852587
+  .. .. .. .. ..@ elementMetadata: NULL
+  .. .. .. .. ..@ metadata       : list()
+  .. .. ..@ seqinfo        :Formal class 'Seqinfo' [package "Seqinfo"] with 4 slots
+  .. .. .. .. ..@ seqnames   : chr [1:22] "chr1" "chr2" "chr3" "chr4" ...
+  .. .. .. .. ..@ seqlengths : int [1:22] NA NA NA NA NA NA NA NA NA NA ...
+  .. .. .. .. ..@ is_circular: logi [1:22] NA NA NA NA NA NA ...
+  .. .. .. .. ..@ genome     : chr [1:22] NA NA NA NA ...
+  .. .. ..@ elementMetadata:Formal class 'DFrame' [package "S4Vectors"] with 6 slots
+  .. .. .. .. ..@ rownames       : NULL
+  .. .. .. .. ..@ nrows          : int 852587
+  .. .. .. .. ..@ elementType    : chr "ANY"
+  .. .. .. .. ..@ elementMetadata: NULL
+  .. .. .. .. ..@ metadata       : list()
+  .. .. .. .. ..@ listData       :List of 5
+  .. .. .. .. .. ..$ stat   : num [1:852587] 3.053 17.708 -5.375 -1.893 0.549 ...
+  .. .. .. .. .. ..$ diff   : num [1:852587] 0.06323 0.37757 -0.06784 -0.01895 0.00984 ...
+  .. .. .. .. .. ..$ rawpval: num [1:852587] 1.48e-02 5.61e-08 5.53e-04 9.30e-02 5.97e-01 ...
+  .. .. .. .. .. ..$ ind.fdr: num [1:852587] 2.39e-02 3.27e-07 1.17e-03 1.26e-01 6.47e-01 ...
+  .. .. .. .. .. ..$ is.sig : logi [1:852587] TRUE TRUE TRUE FALSE FALSE TRUE ...
+  .. .. ..@ elementType    : chr "ANY"
+  .. .. ..@ metadata       : list()
+  ..@ betas : num [1:852587, 1:6] 0.694 0.746 0.829 0.885 0.216 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : chr [1:852587] "chr1:191550" "chr1:605420" "chr1:777872" "chr1:777913" ...
+  .. .. ..$ : chr [1:6] "LNCAP_500_1" "LNCAP_500_2" "LNCAP_500_3" "PREC_500_1" ...
+```
+
+
+``` r
+DMRs <- dmrcate(myAnnotation, lambda = 1000, C = 2, pcutoff = "fdr")
+```
+
+``` output
+Fitting chr1...
+```
+
+``` output
+Fitting chr2...
+```
+
+``` output
+Fitting chr3...
+```
+
+``` output
+Fitting chr4...
+```
+
+``` output
+Fitting chr5...
+```
+
+``` output
+Fitting chr6...
+```
+
+``` output
+Fitting chr7...
+```
+
+``` output
+Fitting chr8...
+```
+
+``` output
+Fitting chr9...
+```
+
+``` output
+Fitting chr10...
+```
+
+``` output
+Fitting chr11...
+```
+
+``` output
+Fitting chr12...
+```
+
+``` output
+Fitting chr13...
+```
+
+``` output
+Fitting chr14...
+```
+
+``` output
+Fitting chr15...
+```
+
+``` output
+Fitting chr16...
+```
+
+``` output
+Fitting chr17...
+```
+
+``` output
+Fitting chr18...
+```
+
+``` output
+Fitting chr19...
+```
+
+``` output
+Fitting chr20...
+```
+
+``` output
+Fitting chr21...
+```
+
+``` output
+Fitting chr22...
+```
+
+``` output
+Demarcating regions...
+```
+
+``` output
+Done!
+```
+
+``` r
+results.ranges <- extractRanges(DMRs, genome = "hg38")
+```
+
+``` output
+DMRcatedata not installed.
+  Full functionality, documentation, and loading of data might not be possible without installing
+```
+
+``` output
+downloading 1 resources
+```
+
+``` output
+retrieving 1 resource
+```
+
+``` output
+loading from cache
+```
+
+``` r
+length(results.ranges)
+```
+
+``` output
+[1] 91122
+```
+
+``` r
+head(results.ranges)
+```
+
+``` output
+GRanges object with 6 ranges and 8 metadata columns:
+      seqnames            ranges strand |   no.cpgs min_smoothed_fdr
+         <Rle>         <IRanges>  <Rle> | <integer>        <numeric>
+  [1]     chr6 33188387-33214093      * |       263                0
+  [2]     chr7 27142816-27176257      * |       232                0
+  [3]     chr6 31651210-31671929      * |       219                0
+  [4]     chr6 33311786-33324252      * |       208                0
+  [5]     chr6 32068753-32091828      * |       172                0
+  [6]     chr6 32834415-32848054      * |       148                0
+          Stouffer       HMFDR       Fisher   maxdiff   meandiff
+         <numeric>   <numeric>    <numeric> <numeric>  <numeric>
+  [1]  0.00000e+00 7.56528e-09  0.00000e+00 -0.877030  0.0548098
+  [2]  0.00000e+00 1.53403e-09  0.00000e+00  0.961156  0.4494012
+  [3] 2.45764e-173 2.60020e-08 3.04765e-251  0.816047  0.0350544
+  [4] 8.36111e-234 1.25794e-07  0.00000e+00  0.622321  0.0974661
+  [5]  0.00000e+00 1.72539e-08  0.00000e+00  0.774299 -0.1674433
+  [6] 1.19367e-220 1.07991e-08 1.77879e-289  0.800936  0.0136151
+           overlapping.genes
+                 <character>
+  [1] COL11A2, RXRB, RNY4P..
+  [2] HOXA3, AC004080.6, H..
+  [3] BAG6, APOM, C6orf47,..
+  [4] TAPBP, ZBTB22, DAXX,..
+  [5]        TNXB, RNA5SP206
+  [6] AL669918.1, TAP2, PS..
+  -------
+  seqinfo: 22 sequences from an unspecified genome; no seqlengths
+```
+
+- `lambda = 1000` sets the smoothing bandwidth and separates regions at gaps of at least 1,000 bases between significant CpGs.
+- `C = 2` gives a Gaussian kernel standard deviation of 500 bases.
+- `pcutoff = "fdr"` uses the individually significant CpGs to index the region threshold. This is the recommended default. A numeric cutoff, such as `pcutoff = 0.05`, instead thresholds kernel-smoothed FDR values directly and can be more permissive; it does not guarantee a 5% region-level FDR.
+
+Examples of changing the individual-CpG FDR threshold and the region-calling cutoff:
+
+
+``` r
+# Stricter individual-CpG FDR threshold
+annotation.strict <- changeFDR(myAnnotation, 1e-10)
+DMRs.strict <- dmrcate(annotation.strict, lambda = 1000, C = 2)
+ranges.strict <- extractRanges(DMRs.strict, genome = "hg38")
+c(baseline = length(results.ranges), stricter = length(ranges.strict))
+
+# Numeric cutoff on kernel-smoothed FDR values; can be more permissive
+DMRs.numeric <- dmrcate(myAnnotation, lambda = 1000, C = 2, pcutoff = 0.05)
+```
+
+## Interpret and visualise regions
+
+Inspect DMRs
+
+`Coordinates`: chromosome, start and end positions.
+`no.cpgs`: number of CpG sites contributing to the region.
+`Stouffer`: a combined regional significance measure; smaller values indicate stronger evidence.
+`meandiff`: the average beta-value difference across the region.
+`maxdiff`: the largest absolute beta-value difference within the region, retaining its direction.
+
+Positive differences indicate higher methylation in LNCaP for our contrast. A mean difference can hide CpGs changing in opposite directions,
+so inspect the plot as well as the summary.
+
+
+``` r
+dmrTable <- as.data.frame(results.ranges)
+head(dmrTable)
+```
+
+``` output
+  seqnames    start      end width strand no.cpgs min_smoothed_fdr
+1     chr6 33188387 33214093 25707      *     263                0
+2     chr7 27142816 27176257 33442      *     232                0
+3     chr6 31651210 31671929 20720      *     219                0
+4     chr6 33311786 33324252 12467      *     208                0
+5     chr6 32068753 32091828 23076      *     172                0
+6     chr6 32834415 32848054 13640      *     148                0
+       Stouffer        HMFDR        Fisher    maxdiff    meandiff
+1  0.000000e+00 7.565283e-09  0.000000e+00 -0.8770301  0.05480977
+2  0.000000e+00 1.534029e-09  0.000000e+00  0.9611558  0.44940122
+3 2.457638e-173 2.600202e-08 3.047654e-251  0.8160471  0.03505441
+4 8.361109e-234 1.257936e-07  0.000000e+00  0.6223214  0.09746613
+5  0.000000e+00 1.725387e-08  0.000000e+00  0.7742990 -0.16744333
+6 1.193673e-220 1.079909e-08 1.778789e-289  0.8009365  0.01361510
+                                                                                                        overlapping.genes
+1                                                               COL11A2, RXRB, RNY4P10, SLC39A7, HSD17B8, MIR219A1, RING1
+2 HOXA3, AC004080.6, HOXA-AS3, HOXA5, HOXA6, AC004080.5, HOXA7, AC004080.4, HOXA9, AC004080.3, HOXA10-AS, MIR196B, HOXA10
+3                                             BAG6, APOM, C6orf47, C6orf47-AS1, GPANK1, Y_RNA, CSNK2B, AL662899.2, LY6G5B
+4                                                                                     TAPBP, ZBTB22, DAXX, SMIM40, SMIM40
+5                                                                                                         TNXB, RNA5SP206
+6                                                                         AL669918.1, TAP2, PSMB8, PSMB8-AS1, PSMB9, TAP1
+```
+
+Plot beta values using the hg38 probe coordinates already stored in `mSetFnFlt`.
+This plot works without an internet connection. Thin lines show individual samples,
+thick lines show group means at each CpG, and the shaded area marks the called DMR.
+
+
+``` r
+groups <- c(LNCaP = "#D55E00", PREC = "#0072B2")
+cols <- groups[as.character(sampleType)]
+
+dmr <- 1L
+stopifnot(length(results.ranges) >= dmr,
+          length(sampleType) == ncol(bVals), !anyNA(cols))
+region <- results.ranges[dmr]
+flank <- 5000L
+window <- GenomicRanges::GRanges(
+  seqnames = as.character(GenomicRanges::seqnames(region)),
+  ranges = IRanges::IRanges(
+    start = max(1L, GenomicRanges::start(region) - flank),
+    end = GenomicRanges::end(region) + flank
+  )
+)
+
+# Align probe coordinates explicitly to the beta matrix row order.
+probe.ranges <- GenomicRanges::granges(mSetFnFlt)
+probe.index <- match(rownames(bVals), names(probe.ranges))
+stopifnot(!anyNA(probe.index))
+probe.ranges <- probe.ranges[probe.index]
+in.window <- which(IRanges::overlapsAny(probe.ranges, window))
+stopifnot(length(in.window) > 0L)
+in.window <- in.window[order(GenomicRanges::start(probe.ranges[in.window]))]
+positions <- GenomicRanges::start(probe.ranges[in.window])
+region.betas <- bVals[in.window, , drop = FALSE]
+
+plot(range(c(GenomicRanges::start(window), GenomicRanges::end(window))),
+     c(0, 1), type = "n", ylim = c(0, 1),
+     xlab = paste0(as.character(GenomicRanges::seqnames(region)), " position (hg38)"),
+     ylab = "Beta value", main = paste("DMR", dmr))
+rect(GenomicRanges::start(region), 0, GenomicRanges::end(region), 1,
+     col = "grey90", border = NA)
+matlines(positions, region.betas, type = "o", pch = 16, cex = 0.4,
+         col = grDevices::adjustcolor(unname(cols), alpha.f = 0.4), lty = 1)
+for (group in names(groups)) {
+  group.mean <- rowMeans(region.betas[, sampleType == group, drop = FALSE],
+                        na.rm = TRUE)
+  lines(positions, group.mean, type = "o", pch = 16,
+        col = groups[[group]], lwd = 3)
+}
+legend("topright", legend = names(groups), col = groups, lwd = 3, bty = "n")
+```
+
+<img src="fig/04-differentially-methylated-regions-rendered-dmr-plot-1.png" alt="" style="display: block; margin: auto;" />
+
+`dmr <- 1L` selects the first returned region; change it to `2L` for the second,
+etc. Check the regional statistics before describing one as the strongest result.
+Look for consistent group separation across CpGs, outlying samples and gaps in
+probe coverage. Lines connect measured CpGs; they do not represent measurements
+between probes.
+
+For a richer plot with gene annotations and sample heatmaps, optionally use
+`DMR.plot()`. It queries Ensembl through biomaRt and requires a working connection
+to that service. If it reports SSL or mirror errors, use the local plot above;
+the annotation connection failure does not invalidate the called DMRs.
+
+
+``` r
+DMR.plot(
+  ranges = results.ranges, dmr = dmr, CpGs = bVals,
+  phen.col = cols, what = "Beta",
+  arraytype = "EPICv2", genome = "hg38"
+)
+```
+
+
+``` r
+dir.create("data/output", recursive = TRUE, showWarnings = FALSE)
+saveRDS(results.ranges, "data/output/DMRs_epicv2_LNCaP_vs_PREC.rds")
+write.csv(dmrTable, "data/output/DMRs_epicv2_LNCaP_vs_PREC.csv",
+          row.names = FALSE)
+```
+
+::::::::::::::::::::::::::::::::::::: callout
+
+### Further learning: remapping EPICv2 probes
+
+Some EPICv2 probes preferentially bind to a genomic location other than their original annotated target. DMRcate can use evidence from the extended EPICv2 manifest to assign eligible probes to these alternative locations before calling regions. Remapping aims to improve positional accuracy and DMR analysis by assigning eligible probes to better-supported genomic locations. It can reveal previously missed regions or change which CpGs support an existing region and where its boundaries fall.
+
+To explore this approach, start from quality-controlled data **before cross-reactive probes are removed and replicate probes are collapsed**, retaining
+full EPICv2 probe IDs. In the DMRcate workflow, `rmSNPandCH(..., rmcrosshyb = FALSE)` retains cross-hybridising probes, and `cpg.annotate(..., arraytype = "EPICv2", epicv2Remap = TRUE)` enables remapping; replicate handling is controlled separately with `epicv2Filter`. These are argument examples, not a complete replacement for the QC workflow.
+
+For a full worked example covering input preparation, remapping, matched comparisons and visualisation,
+see [section 6.2 of the Clark Lab EPICv2 tutorial](https://clark-lab.github.io/EPICv2_tutorial/#remapping-cross-hybridising-probes-and-improving-dmr-calling-with-dmrcate-and-epicv2remap).
+
+Consult the [DMRcate reference manual](https://bioconductor.org/packages/release/bioc/manuals/DMRcate/man/DMRcate.pdf)
+for the arguments supported by your package version. Compare analyses using the same design and thresholds, and inspect the probe locations supporting any changed regions. Improved mapping is the aim; an increase in the number of DMRs alone does not demonstrate improved accuracy.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::: challenge
+
+### Interpret the region analysis
+
+1. For the contrast `LNCaP_vs_PREC`, what does a positive `meandiff` indicate?
+2. What should you check if a candidate region has a large mean beta difference?
+
+:::::::::::::::::::::::: solution
+
+### Solution
+
+1. Higher average methylation in LNCaP than PrEC across the region.
+2. Inspect regional evidence, individual CpG directions, sample variation, probe coverage and mapping. A large effect alone does not establish statistical significance or biological generalisability.
+
+:::::::::::::::::::::::::::::::::
+::::::::::::::::::::::::::::::::::::::::::::::::
 
 ::::::::::::::::::::::::::::::::::::: keypoints
 
-- Key points will be added when this episode is completed.
+- DMRcate combines probe-wise statistics with genomic proximity to identify regions.
+- Use M-values for testing, beta values for interpretation and a consistent array type and genome build.
+- CpG FDR thresholds and numeric kernel-smoothed cutoffs have different meanings.
+- Inspect regional statistics and sample-level patterns alongside gene annotations.
+- EPICv2 remapping aims to improve positional accuracy and DMR detection by assigning eligible probes to better-supported genomic locations; these probes must be retained before cross-reactivity filtering.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
