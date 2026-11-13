@@ -648,17 +648,28 @@ print(topGSA(gst.kegg, number=10))
 ```
 
 ``` output
-                              Description    N   DE         P.DE         FDR
-hsa01100               Metabolic pathways 1489 1480 1.054744e-05 0.003923647
-hsa05200               Pathways in cancer  509  509 5.750207e-05 0.010695386
-hsa05165   Human papillomavirus infection  321  321 2.157508e-03 0.267531017
-hsa04010           MAPK signaling pathway  289  289 4.226717e-03 0.393084656
-hsa04151       PI3K-Akt signaling pathway  343  342 9.266902e-03 0.539733492
-hsa04142              Lysosome biogenesis  239  239 1.072015e-02 0.539733492
-hsa04014            Ras signaling pathway  228  228 1.328740e-02 0.539733492
-hsa04820     Cytoskeleton in muscle cells  225  225 1.412028e-02 0.539733492
-hsa04810 Regulation of actin cytoskeleton  222  222 1.500577e-02 0.539733492
-hsa05163  Human cytomegalovirus infection  217  217 1.500640e-02 0.539733492
+                                                             Description    N
+hsa01100                                              Metabolic pathways 1489
+hsa05200                                              Pathways in cancer  509
+hsa05165                                  Human papillomavirus infection  321
+hsa04010                                          MAPK signaling pathway  289
+hsa04151                                      PI3K-Akt signaling pathway  343
+hsa04900 Neuroendocrine signaling pathway of hypothalamus-pituitary axis  337
+hsa04142                                             Lysosome biogenesis  239
+hsa04014                                           Ras signaling pathway  228
+hsa04820                                    Cytoskeleton in muscle cells  225
+hsa04810                                Regulation of actin cytoskeleton  222
+           DE         P.DE         FDR
+hsa01100 1480 1.054744e-05 0.003934195
+hsa05200  509 5.750207e-05 0.010724137
+hsa05165  321 2.157508e-03 0.268250187
+hsa04010  289 4.226717e-03 0.394141336
+hsa04151  342 9.266902e-03 0.496085689
+hsa04900  336 1.026729e-02 0.496085689
+hsa04142  239 1.072015e-02 0.496085689
+hsa04014  228 1.328740e-02 0.496085689
+hsa04820  225 1.412028e-02 0.496085689
+hsa04810  222 1.500577e-02 0.496085689
 ```
 
 ::::::::::::::::::::::::::::::::::::: keypoints

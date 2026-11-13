@@ -72,9 +72,7 @@ myAnnotation <- cpg.annotate(
   coef = "LNCaP_vs_PREC", arraytype = "EPICv2",
   epicv2Filter = "mean", epicv2Remap = FALSE, fdr = 0.05
 )
-```
 
-``` r
 str(myAnnotation)
 ```
 
