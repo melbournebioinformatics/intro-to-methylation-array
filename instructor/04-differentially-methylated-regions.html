@@ -308,7 +308,7 @@
       </div>
       <hr></nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Differentially methylated regions with DMRcate</h1>
-        <p>Last updated on 2026-11-11 |
+        <p>Last updated on 2026-11-13 |
 
         <a href="https://github.com/stellaliu525-web/intro-to-methylation-array/edit/main/episodes/04-differentially-methylated-regions.Rmd" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -574,14 +574,21 @@ region-calling cutoff:</p>
 </div>
 </section><section><h2 class="section-heading" id="interpret-and-visualise-regions">Interpret and visualise regions<a class="anchor" aria-label="anchor" href="#interpret-and-visualise-regions"></a></h2>
 <hr class="half-width"><p>Inspect DMRs</p>
-<p><code>Coordinates</code>: chromosome, start and end positions.
-<code>no.cpgs</code>: number of CpG sites contributing to the region.
-<code>Stouffer</code>: a combined regional significance measure; smaller
-values indicate stronger evidence. <code>meandiff</code>: the average
-beta-value difference across the region. <code>maxdiff</code>: the
-largest absolute beta-value difference within the region, retaining its
-direction.</p>
-<p>Positive differences indicate higher methylation in LNCaP for our
+<ul><li>
+<code>Coordinates</code>: chromosome, start and end positions.</li>
+<li>
+<code>no.cpgs</code>: number of CpG sites contributing to the
+region.</li>
+<li>
+<code>Stouffer</code>: a combined regional significance measure;
+smaller values indicate stronger evidence.</li>
+<li>
+<code>meandiff</code>: the average beta-value difference across the
+region.</li>
+<li>
+<code>maxdiff</code>: the largest absolute beta-value difference
+within the region, retaining its direction.</li>
+</ul><p>Positive differences indicate higher methylation in LNCaP for our
 contrast. A mean difference can hide CpGs changing in opposite
 directions, so inspect the plot as well as the summary.</p>
 <div class="codewrapper sourceCode" id="cb17">
@@ -740,7 +747,7 @@ difference?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>Higher average methylation in LNCaP than PrEC across the
 region.</li>
@@ -836,9 +843,9 @@ any links that you are not going to use.
   "creativeWorkStatus": "active",
   "url": "https://stellaliu525-web.github.io/intro-to-methylation-array/instructor/04-differentially-methylated-regions.html",
   "identifier": "https://stellaliu525-web.github.io/intro-to-methylation-array/instructor/04-differentially-methylated-regions.html",
-  "dateCreated": "2026-11-11",
-  "dateModified": "2026-11-11",
-  "datePublished": "2026-11-12"
+  "dateCreated": "2026-11-13",
+  "dateModified": "2026-11-13",
+  "datePublished": "2026-11-13"
 }
 
   </script><script>
