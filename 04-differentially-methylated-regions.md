@@ -214,11 +214,11 @@ DMRs.numeric <- dmrcate(myAnnotation, lambda = 1000, C = 2, pcutoff = 0.05)
 
 Inspect DMRs
 
-`Coordinates`: chromosome, start and end positions.
-`no.cpgs`: number of CpG sites contributing to the region.
-`Stouffer`: a combined regional significance measure; smaller values indicate stronger evidence.
-`meandiff`: the average beta-value difference across the region.
-`maxdiff`: the largest absolute beta-value difference within the region, retaining its direction.
+* `Coordinates`: chromosome, start and end positions.
+* `no.cpgs`: number of CpG sites contributing to the region.
+* `Stouffer`: a combined regional significance measure; smaller values indicate stronger evidence.
+* `meandiff`: the average beta-value difference across the region.
+* `maxdiff`: the largest absolute beta-value difference within the region, retaining its direction.
 
 Positive differences indicate higher methylation in LNCaP for our contrast. A mean difference can hide CpGs changing in opposite directions,
 so inspect the plot as well as the summary.
