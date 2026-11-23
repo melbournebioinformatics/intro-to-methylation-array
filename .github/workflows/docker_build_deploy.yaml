@@ -8,6 +8,7 @@ on:
     paths-ignore:
       - '.github/workflows/**.yaml'
       - '.github/workbench-docker-version.txt'
+      - '.devcontainer'
   schedule:
     - cron: '0 0 * * 2'
   workflow_run:
@@ -37,7 +38,7 @@ on:
 
 # only one build/deploy at a time
 concurrency:
-  group: docker-build-deploy
+  group: docker-build-deploy-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
@@ -48,6 +49,7 @@ jobs:
       do-build: ${{ steps.build-check.outputs.do-build }}
       renv-needed: ${{ steps.build-check.outputs.renv-needed }}
       renv-cache-hashsum: ${{ steps.build-check.outputs.renv-cache-hashsum }}
+      dependency-image-ref: ${{ steps.build-check.outputs.dependency-image-ref }}
       workbench-container-file-exists: ${{ steps.wb-vers.outputs.workbench-container-file-exists }}
       wb-vers: ${{ steps.wb-vers.outputs.container-version }}
       last-wb-vers: ${{ steps.wb-vers.outputs.last-container-version }}
@@ -57,7 +59,7 @@ jobs:
     steps:
       - name: "Should we run build and deploy?"
         id: build-check
-        uses: carpentries/actions/build-preflight@main
+        uses: carpentries/actions/build-preflight@v1
 
       - name: "Checkout Lesson"
         if: steps.build-check.outputs.do-build == 'true'
@@ -66,7 +68,7 @@ jobs:
       - name: "Get container version info"
         id: wb-vers
         if: steps.build-check.outputs.do-build == 'true'
-        uses: carpentries/actions/container-version@main
+        uses: carpentries/actions/container-version@v1
         with:
           WORKBENCH_TAG: ${{ vars.WORKBENCH_TAG }}
           renv-needed: ${{ steps.build-check.outputs.renv-needed }}
@@ -86,56 +88,20 @@ jobs:
       checks: write
       contents: write
       pages: write
-      id-token: write
     container:
-      image: ghcr.io/carpentries/workbench-docker:${{ vars.WORKBENCH_TAG || 'latest' }}
+      image: ${{ needs.preflight.outputs.dependency-image-ref }}
       env:
         WORKBENCH_PROFILE: "ci"
         GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
         RENV_PATHS_ROOT: /home/rstudio/lesson/renv
-        # Checkout and container mount paths must resolve to the same library.
-        RENV_PATHS_LIBRARY: /home/rstudio/lesson/renv/ci-library
         RENV_PROFILE: "lesson-requirements"
         RENV_CONFIG_EXTERNAL_LIBRARIES: "/usr/local/lib/R/site-library"
-        # Limit source builds to one package at a time in the CPU-limited container.
-        RENV_CONFIG_INSTALL_JOBS: "1"
-        RENV_CONFIG_INSTALL_VERBOSE: "TRUE"
-        # Write new installs to ci-cache; also search the original Workbench cache.
-        RENV_PATHS_CACHE: /home/rstudio/lesson/renv/ci-cache:/home/rstudio/lesson/renv/cache
-        RENV_CONFIG_CACHE_ENABLED: "TRUE"
+        WORKBENCH_OVERLAY_CUSTOMIZATION: ${{ vars.WORKBENCH_OVERLAY_CUSTOMIZATION || '' }}
       volumes:
         - ${{ github.workspace }}:/home/rstudio/lesson
       options: --cpus 1
     steps:
       - uses: actions/checkout@v6
-
-      # Match the paths and key used by workflow 03's existing Workbench cache.
-      - name: Restore Workbench package cache
-        id: restore-workbench-cache
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            /home/rstudio/lesson/renv
-            /usr/local/lib/R/site-library
-          key: ${{ github.repository }}/${{ needs.preflight.outputs.wb-vers }}_renv-${{ vars.CACHE_VERSION || github.event.inputs.CACHE_VERSION || needs.preflight.outputs.renv-cache-hashsum }}
-
-      - name: "Mark Repository as Safe"
-        shell: bash
-        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-
-      - name: Keep dependency definitions from this commit
-        shell: bash
-        run: git restore --source=HEAD -- renv/profiles/lesson-requirements/renv.lock renv/profiles/lesson-requirements/renv/settings.json
-
-      # Cache only completed renv package entries, never temporary staging directories.
-      - name: Restore installed R packages
-        id: restore-r-packages
-        uses: actions/cache/restore@v4
-        with:
-          path: /home/rstudio/lesson/renv/ci-cache
-          key: r-packages-v1-${{ runner.os }}-${{ vars.WORKBENCH_TAG || 'latest' }}-${{ hashFiles('renv/profiles/lesson-requirements/renv.lock', '.github/workbench-docker-version.txt') }}-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: |
-            r-packages-v1-${{ runner.os }}-${{ vars.WORKBENCH_TAG || 'latest' }}-${{ hashFiles('renv/profiles/lesson-requirements/renv.lock', '.github/workbench-docker-version.txt') }}-
 
       - name: "Debugging Info"
         run: |
@@ -147,87 +113,17 @@ jobs:
           Rscript -e 'sessionInfo()'
         shell: bash
 
-      - name: Setup system dependencies
-        shell: bash
-        run: Rscript /home/rstudio/.workbench/setup_lesson_deps.R
-
-      - name: Restore and verify locked lesson packages
-        id: verify-r-packages
-        shell: Rscript {0}
+      - name: "Mark Repository as Safe"
         run: |
-          options(
-            renv.install.timeout = 4 * 60 * 60,
-            renv.config.install.jobs = 1L,
-            renv.config.install.verbose = TRUE,
-            renv.config.install.transactional = FALSE
-          )
-          project <- Sys.getenv("GITHUB_WORKSPACE")
-          stopifnot(nzchar(project), dir.exists(project))
-          renv::load(project = project, profile = "lesson-requirements")
-          cat("renv version:", as.character(packageVersion("renv")), "\n")
-          cat("Active library:", renv::paths$library(project = project), "\n")
-          cat("Cache search paths:\n")
-          print(renv::paths$cache())
-          for (cache in renv::paths$cache()) {
-            descriptions <- list.files(cache, pattern = "^DESCRIPTION$", recursive = TRUE)
-            cat(cache, ":", length(descriptions), "cached package entries\n")
-          }
-          renv::restore(
-            project = project,
-            lockfile = file.path(project, "renv/profiles/lesson-requirements/renv.lock"),
-            prompt = FALSE
-          )
-          # Exercise package loading in a fresh process from the build checkout.
-          # A successful restore alone does not prove the render can see it.
-          callr::r(
-            function(project) {
-              renv::load(project = project, profile = "lesson-requirements")
-              cat("Render library paths:\n")
-              print(.libPaths())
-              packages <- c(
-                "dplyr", "circlize", "minfi", "limma", "GEOquery",
-                "AnnotationHub", "ComplexHeatmap", "DMRcate", "missMethyl",
-                "IlluminaHumanMethylationEPICv2anno.20a1.hg38",
-                "IlluminaHumanMethylationEPICv2manifest"
-              )
-              for (package in packages) {
-                library(package, character.only = TRUE)
-                cat(package, "loaded from", find.package(package), "\n")
-              }
-            },
-            args = list(project = project),
-            wd = project,
-            show = TRUE
-          )
-          # setup_lesson_deps creates DESCRIPTION for system dependency discovery.
-          if (file.exists("DESCRIPTION.bak")) {
-            file.copy("DESCRIPTION.bak", "DESCRIPTION", overwrite = TRUE)
-            unlink("DESCRIPTION.bak")
-          } else {
-            unlink("DESCRIPTION")
-          }
-
-      - name: Save installed R packages for retries
-        if: ${{ always() && steps.verify-r-packages.outcome != 'skipped' && steps.verify-r-packages.outcome != '' }}
-        uses: actions/cache/save@v4
-        with:
-          path: /home/rstudio/lesson/renv/ci-cache
-          key: ${{ steps.restore-r-packages.outputs.cache-primary-key }}
-
-      # The source branch contains generated markdown and HTML. Sandpaper needs
-      # both destinations absent to attach the md-outputs and gh-pages worktrees.
-      - name: Clear generated outputs before creating worktrees
+          git config --global --add safe.directory $(pwd)
         shell: bash
-        run: |
-          rm -rf -- "$GITHUB_WORKSPACE/site/built" "$GITHUB_WORKSPACE/site/docs"
-          git worktree prune
 
       - name: "Run Container and Build Site"
         id: build-and-deploy
-        uses: carpentries/actions/build-and-deploy@main
+        uses: carpentries/actions/build-and-deploy@v1
         with:
           reset: ${{ vars.BUILD_RESET || github.event.inputs.reset || 'false' }}
-          skip-manage-deps: 'true'
+          skip-manage-deps: ${{ github.event.inputs.force-skip-manage-deps == 'true' || contains(needs.preflight.outputs.dependency-image-ref, '-deps:') }}
           lang-code: ${{ vars.LANG_CODE || '' }}
 
   update-container-version:
@@ -247,10 +143,11 @@ jobs:
       )
     steps:
       - name: "Record container version used"
-        uses: carpentries/actions/record-container-version@main
+        uses: carpentries/actions/record-container-version@v1
         with:
           CONTAINER_VER: ${{ needs.preflight.outputs.wb-vers }}
-          AUTO_MERGE: ${{ vars.AUTO_MERGE_CONTAINER_VERSION_UPDATE || 'true' }}
+          OMIT_PR: ${{ vars.OMIT_PR_CONTAINER_VERSION_UPDATE || 'false' }}
+          AUTO_MERGE: ${{ vars.AUTO_MERGE_CONTAINER_VERSION_UPDATE || 'false' }}
           token: ${{ secrets.GITHUB_TOKEN }}
           role-to-assume: ${{ secrets.AWS_GH_OIDC_ARN }}
           aws-region: ${{ secrets.AWS_GH_OIDC_REGION }}

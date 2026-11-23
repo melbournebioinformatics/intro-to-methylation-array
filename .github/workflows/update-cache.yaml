@@ -2,7 +2,7 @@ name: "02 Maintain: Check for Updated Packages"
 description: "Check for updated R packages and create a pull request to update the lesson's renv lockfile and package cache"
 on:
   schedule:
-    - cron: '0 0 * * 2'
+    - cron: '0 0 * * 2' # every Tuesday at midnight UTC
   workflow_dispatch:
     inputs:
       name:
@@ -67,14 +67,14 @@ jobs:
 
       - name: "Is renv required?"
         id: renv-check
-        uses: carpentries/actions/renv-checks@main
+        uses: carpentries/actions/renv-checks@v1
         with:
           CACHE_VERSION: ${{ inputs.CACHE_VERSION || '' }}
           skip-cache-check: true
 
   update_cache:
     name: "Create Package Update Pull Request"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs: check-renv
     permissions:
       contents: write
@@ -95,119 +95,20 @@ jobs:
         uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
-          install-r: false
-
-      - name: "Configure Bioconductor repositories"
-        id: bioconductor
-        shell: Rscript --vanilla {0}
-        run: |
-          bootstrap <- tempfile("bioc-library-")
-          dir.create(bootstrap)
-          .libPaths(c(bootstrap, .libPaths()))
-          install.packages(c("BiocManager", "renv"), lib = bootstrap,
-            repos = "https://cloud.r-project.org")
-          Sys.setenv(RENV_PROFILE = "lesson-requirements")
-          lesson_library <- renv::paths$library()
-          dir.create(lesson_library, recursive = TRUE, showWarnings = FALSE)
-          # A temporary bootstrap library is not visible to later R processes.
-          install.packages("BiocManager", lib = lesson_library,
-            repos = "https://cloud.r-project.org")
-          bioc_version <- as.character(BiocManager::version())
-          renv::settings$bioconductor.version(bioc_version)
-          cat("R:", R.version.string, "\nBioconductor:", bioc_version, "\n")
-          options(repos = c(CRAN = "https://cloud.r-project.org"))
-          repos <- c(
-            carpentries = "https://carpentries.r-universe.dev/",
-            carpentries_archive = "https://carpentries.github.io/drat/",
-            BiocManager::repositories()
-          )
-          print(repos)
-          # The action accepts a literal R vector, not a function call.
-          expression <- paste0("c(", paste(sprintf("%s = '%s'",
-            names(repos), repos), collapse = ", "), ")")
-          cat(paste0("repos=", expression, "\n"),
-            file = Sys.getenv("GITHUB_OUTPUT"), append = TRUE)
-          # Keep these repositories active when renv loads the old lockfile.
-          override <- paste(names(repos), repos, sep = "=", collapse = ";")
-          cat(paste0("RENV_CONFIG_REPOS_OVERRIDE=", override, "\n"),
-            file = Sys.getenv("GITHUB_ENV"), append = TRUE)
-          # Check both software and annotation indexes before installing packages.
-          options(timeout = 300, warn = 1)
-          available <- available.packages(repos = repos, type = "source")
-          required <- c("AnnotationHub", "ComplexHeatmap",
-            "DMRcate", "GEOquery", "IlluminaHumanMethylationEPICv2anno.20a1.hg38",
-            "IlluminaHumanMethylationEPICv2manifest", "limma",
-            "minfi", "missMethyl")
-          missing <- setdiff(required, rownames(available))
-          if (length(missing)) {
-            stop("Bioconductor repository check failed: ",
-              paste(missing, collapse = ", "))
-          }
-          print(available[required, c("Package", "Version", "Repository")])
+          install-r: true
 
       - name: "Update {renv} deps and determine if a PR is needed"
         id: update
-        uses: carpentries/actions/update-lockfile@main
+        uses: carpentries/actions/update-lockfile@v1
         with:
-          repos: ${{ steps.bioconductor.outputs.repos }}
           update: ${{ env.UPDATE_PACKAGES }}
           force-renv-init: ${{ env.FORCE_RENV_INIT }}
-          generate-cache: false
+          generate-cache: ${{ env.LOCKFILE_CACHE_GEN }}
           cache-version: ${{ secrets.CACHE_VERSION }}
-
-      - name: "Install Bioconductor system dependencies"
-        shell: bash
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev \
-            libgsl-dev libbz2-dev liblzma-dev zlib1g-dev libicu-dev \
-            libpng-dev libjpeg-dev libtiff-dev libfontconfig1-dev \
-            libfreetype6-dev libharfbuzz-dev libfribidi-dev \
-            libgraphviz-dev pandoc cmake pkg-config
-
-      - name: "Install and record Bioconductor packages"
-        run: Rscript --vanilla .github/scripts/install-bioconductor.R
-
-      - name: "Summarise the completed lockfile"
-        id: complete
-        shell: python
-        run: |
-          import datetime
-          import json
-          import os
-          import subprocess
-          from pathlib import Path
-          path = "renv/profiles/lesson-requirements/renv.lock"
-          before = json.loads(subprocess.check_output(["git", "show", "HEAD:" + path]))
-          after = json.loads(Path(path).read_text())
-          old, new = before["Packages"], after["Packages"]
-          changed = sorted(p for p in old.keys() | new.keys() if old.get(p) != new.get(p))
-          report = "\n".join(
-              f"{p}: {old.get(p, {}).get('Version', 'absent')} -> "
-              f"{new.get(p, {}).get('Version', 'removed')}" for p in changed
-          )
-          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
-              output.write(f"n={len(changed)}\n")
-              output.write(f"date={datetime.date.today().isoformat()}\n")
-              output.write(f"report<<PACKAGE_REPORT\n{report}\nPACKAGE_REPORT\n")
-
-      - name: "Upload verified lockfile"
-        uses: actions/upload-artifact@v7
-        with:
-          name: verified-renv-lockfile
-          path: renv/profiles/lesson-requirements/renv.lock
-
-      - name: "Save completed package cache"
-        if: env.LOCKFILE_CACHE_GEN == 'true'
-        uses: actions/cache/save@v5
-        with:
-          path: ${{ env.RENV_PATHS_ROOT }}
-          key: ${{ runner.os }}-tmp-renv-${{ hashFiles('**/renv.lock') }}
 
       - name: "Validate Current Org and Workflow"
         id: validate-org-workflow
-        uses: carpentries/actions/validate-org-workflow@main
+        uses: carpentries/actions/validate-org-workflow@v1
         with:
           repo: ${{ github.repository }}
           workflow: ${{ github.workflow }}
@@ -250,21 +151,21 @@ jobs:
       - name: "Create Pull Request"
         id: cpr
         if: |
-          steps.complete.outputs.n > 0
+          steps.update.outputs.n > 0
         uses: carpentries/create-pull-request@main
         with:
           token: ${{ steps.set-pat.outputs.pat || secrets.SANDPAPER_WORKFLOW }}
           delete-branch: true
           branch: "update/packages"
-          commit-message: "[actions] update ${{ steps.complete.outputs.n }} packages"
-          title: "Update ${{ steps.complete.outputs.n }} packages"
+          commit-message: "[actions] update ${{ steps.update.outputs.n }} packages"
+          title: "Update ${{ steps.update.outputs.n }} packages"
           body: |
             :robot: This is an automated build
 
-            This will update ${{ steps.complete.outputs.n }} packages in your lesson with the following versions:
+            This will update ${{ steps.update.outputs.n }} packages in your lesson with the following versions:
 
             ```
-            ${{ steps.complete.outputs.report }}
+            ${{ steps.update.outputs.report }}
             ```
 
             :stopwatch: In a few minutes, a comment will appear that will show you how the output has changed based on these updates.
@@ -276,14 +177,14 @@ jobs:
             git checkout update/packages
             ```
 
-            - Auto-generated by [create-pull-request][1] on ${{ steps.complete.outputs.date }}
+            - Auto-generated by [create-pull-request][1] on ${{ steps.update.outputs.date }}
 
             [1]: https://github.com/carpentries/create-pull-request/tree/main
           labels: "type: package cache"
           draft: false
 
       - name: "Skip PR creation"
-        if: steps.complete.outputs.n == 0
+        if: steps.update.outputs.n == 0
         run: |
           echo "No updates needed, skipping PR creation"
         shell: bash
